@@ -17,14 +17,14 @@ using namespace DirectX::SimpleMath;
 
 ExampleApp::ExampleApp() : AppBase() {}
 
-bool ExampleApp::Initialize() {
+bool ExampleApp::Initialize() { 
 
     if (!AppBase::Initialize())
         return false;
 
-    AppBase::InitCubemaps(L"../Assets/Textures/Cubemaps/HDRI/",
-                          L"DaySkyEnvHDR.dds", L"DaySkySpecularHDR.dds",
-                          L"DaySkyDiffuseHDR.dds", L"DaySkyBrdf.dds");
+    AppBase::InitCubemaps(L"../Assets/Textures/Cubemaps/HDRI/EveningSky/",
+                          L"EveningSkyEnvHDR.dds", L"EveningSkySpecularHDR.dds",
+                          L"EveningSkyDiffuseHDR.dds", L"EveningSkyBrdf.dds");
 
     // 후처리용 화면 사각형
     {
@@ -35,14 +35,15 @@ bool ExampleApp::Initialize() {
 
     // 환경 박스 초기화
     {
-        MeshData skyboxMesh = GeometryGenerator::MakeBox(40.0f);
+        MeshData skyboxMesh = GeometryGenerator::MakeBox(50.0f);
         std::reverse(skyboxMesh.indices.begin(), skyboxMesh.indices.end());
         m_skybox = make_shared<Model>(m_device, m_context, vector{skyboxMesh});
+
     }
 
-    // 바닥(거울)
-    {
-        auto mesh = GeometryGenerator::MakeSquare(5.0);
+    // 바닥
+    { 
+        auto mesh = GeometryGenerator::MakeSquare(50.0);
         // mesh.albedoTextureFilename =
         //     "../Assets/Textures/blender_uv_grid_2k.png";
         m_ground = make_shared<Model>(m_device, m_context, vector{mesh});
@@ -51,14 +52,11 @@ bool ExampleApp::Initialize() {
         m_ground->m_materialConstsCPU.metallicFactor = 0.5f;
         m_ground->m_materialConstsCPU.roughnessFactor = 0.3f;
 
-        Vector3 position = Vector3(0.0f, -0.5f, 2.0f);
+        Vector3 position = Vector3(0.0f, 0.0f, 2.0f);
         m_ground->UpdateWorldRow(Matrix::CreateRotationX(3.141592f * 0.5f) *
                                  Matrix::CreateTranslation(position));
 
-        m_mirrorPlane = SimpleMath::Plane(position, Vector3(0.0f, 1.0f, 0.0f));
-        m_mirror = m_ground; // 바닥에 거울처럼 반사 구현
-
-        // m_basicList.push_back(m_ground); // 거울은 리스트에 등록 X
+        m_basicList.push_back(m_ground); 
     }
 
     // Main Object
@@ -71,7 +69,7 @@ bool ExampleApp::Initialize() {
         //     true);
 
         // 컴퓨터가 느릴 때는 간단한 물체로 테스트 하세요.
-        vector<MeshData> meshes = {GeometryGenerator::MakeSphere(0.4f, 50, 50)};
+        vector<MeshData> meshes = {GeometryGenerator::MakeSphere(0.8f, 50, 50)};
 
         // string path = "../Assets/Characters/armored-female-future-soldier/";
         // auto meshes = GeometryGenerator::ReadFromFile(path,
@@ -92,39 +90,10 @@ bool ExampleApp::Initialize() {
 
         m_basicList.push_back(m_mainObj); // 리스트에 등록
 
-        // 동일한 크기와 위치에 BoundingSphere 만들기
-        m_mainBoundingSphere = BoundingSphere(center, 0.4f);
+
+
     }
 
-    // 추가 물체1
-    {
-        MeshData mesh = GeometryGenerator::MakeSphere(0.2f, 200, 200);
-        Vector3 center(0.5f, 0.5f, 2.0f);
-        auto m_obj = make_shared<Model>(m_device, m_context, vector{mesh});
-        m_obj->UpdateWorldRow(Matrix::CreateTranslation(center));
-        m_obj->m_materialConstsCPU.albedoFactor = Vector3(0.1f, 0.1f, 1.0f);
-        m_obj->m_materialConstsCPU.roughnessFactor = 0.2f;
-        m_obj->m_materialConstsCPU.metallicFactor = 0.6f;
-        m_obj->m_materialConstsCPU.emissionFactor = Vector3(0.0f);
-        m_obj->UpdateConstantBuffers(m_device, m_context);
-
-        m_basicList.push_back(m_obj);
-    }
-
-    // 추가 물체2
-    {
-        MeshData mesh = GeometryGenerator::MakeBox(0.2f);
-        Vector3 center(0.0f, 0.5f, 2.5f);
-        auto m_obj = make_shared<Model>(m_device, m_context, vector{mesh});
-        m_obj->UpdateWorldRow(Matrix::CreateTranslation(center));
-        m_obj->m_materialConstsCPU.albedoFactor = Vector3(1.0f, 0.2f, 0.2f);
-        m_obj->m_materialConstsCPU.roughnessFactor = 0.5f;
-        m_obj->m_materialConstsCPU.metallicFactor = 0.9f;
-        m_obj->m_materialConstsCPU.emissionFactor = Vector3(0.0f);
-        m_obj->UpdateConstantBuffers(m_device, m_context);
-
-        m_basicList.push_back(m_obj);
-    }
 
     // 조명 설정
     { 
@@ -135,18 +104,8 @@ bool ExampleApp::Initialize() {
         m_globalConstsCPU.lights[0].spotPower = 3.0f;
         m_globalConstsCPU.lights[0].radius = 0.02f;
         m_globalConstsCPU.lights[0].type =
-            LIGHT_SPOT | LIGHT_SHADOW; // Point with shadow
+            LIGHT_SPOT | LIGHT_SHADOW; // Point with shadow    
 
-        // 조명 1의 위치와 방향은 Update()에서 설정
-        m_globalConstsCPU.lights[1].radiance = Vector3(5.0f);
-        m_globalConstsCPU.lights[1].spotPower = 3.0f;
-        m_globalConstsCPU.lights[1].fallOffEnd = 20.0f;
-        m_globalConstsCPU.lights[1].radius = 0.02f;
-        m_globalConstsCPU.lights[1].type =
-            LIGHT_SPOT | LIGHT_SHADOW; // Point with shadow
-
-        // 조명 2는 꺼놓음
-        m_globalConstsCPU.lights[2].type = LIGHT_OFF;
     }
 
     // 조명 위치 표시
@@ -170,36 +129,13 @@ bool ExampleApp::Initialize() {
         }
     }
 
-    // 커서 표시 (Main sphere와의 충돌이 감지되면 월드 공간에 작게 그려지는 구)
-    {
-        MeshData sphere = GeometryGenerator::MakeSphere(0.01f, 10, 10);
-        m_cursorSphere =
-            make_shared<Model>(m_device, m_context, vector{sphere});
-        m_cursorSphere->m_isVisible = false; // 마우스가 눌렸을 때만 보임
-        m_cursorSphere->m_castShadow = false; // 그림자 X
-        m_cursorSphere->m_materialConstsCPU.albedoFactor = Vector3(0.0f);
-        m_cursorSphere->m_materialConstsCPU.emissionFactor =
-            Vector3(0.0f, 1.0f, 0.0f);
 
-        m_basicList.push_back(m_cursorSphere); // 리스트에 등록
-    }
 
     return true;
 }
 
 void ExampleApp::UpdateLights(float dt) {
-
-    // 회전하는 lights[1] 업데이트
-    static Vector3 lightDev = Vector3(1.0f, 0.0f, 0.0f);
-    if (m_lightRotate) {
-        lightDev = Vector3::Transform(
-            lightDev, Matrix::CreateRotationY(dt * 3.141592f * 0.5f));
-    }
-    m_globalConstsCPU.lights[1].position = Vector3(0.0f, 1.1f, 2.0f) + lightDev;
-    Vector3 focusPosition = Vector3(0.0f, -0.5f, 1.7f);
-    m_globalConstsCPU.lights[1].direction =
-        focusPosition - m_globalConstsCPU.lights[1].position;
-    m_globalConstsCPU.lights[1].direction.Normalize();
+    
       
     // 그림자맵을 만들기 위한 시점 
     for (int i = 0; i < MAX_LIGHTS; i++) {
@@ -256,10 +192,10 @@ void ExampleApp::Update(float dt) {
 
     // 카메라의 이동
     m_camera.UpdateKeyboard(dt, m_keyPressed);
-
+     
     // 반사 행렬 추가
     const Vector3 eyeWorld = m_camera.GetEyePos();
-    const Matrix reflectRow = Matrix::CreateReflection(m_mirrorPlane);
+    const Matrix reflectRow;
     const Matrix viewRow = m_camera.GetViewRow();
     const Matrix projRow = m_camera.GetProjRow();
 
@@ -268,8 +204,6 @@ void ExampleApp::Update(float dt) {
     // 공용 ConstantBuffer 업데이트
     AppBase::UpdateGlobalConstants(eyeWorld, viewRow, projRow, reflectRow);
 
-    // 거울은 따로 처리
-    m_mirror->UpdateConstantBuffers(m_device, m_context);
 
     // 조명의 위치 반영
     for (int i = 0; i < MAX_LIGHTS; i++)
@@ -278,30 +212,6 @@ void ExampleApp::Update(float dt) {
                 std::max(0.01f, m_globalConstsCPU.lights[i].radius)) *
             Matrix::CreateTranslation(m_globalConstsCPU.lights[i].position));
 
-    // 마우스 이동/회전 반영
-    if (m_leftButton || m_rightButton) {
-        Quaternion q;
-        Vector3 dragTranslation;
-        Vector3 pickPoint;
-        if (UpdateMouseControl(m_mainBoundingSphere, q, dragTranslation,
-                               pickPoint)) {
-            Vector3 translation = m_mainObj->m_worldRow.Translation();
-            m_mainObj->m_worldRow.Translation(Vector3(0.0f));
-            m_mainObj->UpdateWorldRow(
-                m_mainObj->m_worldRow * Matrix::CreateFromQuaternion(q) *
-                Matrix::CreateTranslation(dragTranslation + translation));
-            m_mainBoundingSphere.Center = m_mainObj->m_worldRow.Translation();
-
-            // 충돌 지점에 작은 구 그리기
-            m_cursorSphere->m_isVisible = true;
-            m_cursorSphere->UpdateWorldRow(
-                Matrix::CreateTranslation(pickPoint));
-        } else {
-            m_cursorSphere->m_isVisible = false;
-        }
-    } else {
-        m_cursorSphere->m_isVisible = false;
-    }
 
     for (auto &i : m_basicList) {
         i->UpdateConstantBuffers(m_device, m_context);
@@ -336,8 +246,7 @@ void ExampleApp::Render() {
     AppBase::SetGlobalConsts(m_globalConstsGPU);
     for (auto &i : m_basicList)
         i->Render(m_context);
-    m_skybox->Render(m_context);
-    m_mirror->Render(m_context);
+    //m_skybox->Render(m_context);
 
     // 그림자맵 만들기
     AppBase::SetShadowViewport(); // 그림자맵 해상도
@@ -352,8 +261,7 @@ void ExampleApp::Render() {
             for (auto &i : m_basicList)
                 if (i->m_castShadow && i->m_isVisible)
                     i->Render(m_context);
-            m_skybox->Render(m_context);
-            m_mirror->Render(m_context);
+            //m_skybox->Render(m_context);
         }
     }
 
@@ -372,7 +280,7 @@ void ExampleApp::Render() {
     vector<ID3D11ShaderResourceView *> shadowSRVs;
     for (int i = 0; i < MAX_LIGHTS; i++) {
         shadowSRVs.push_back(m_shadowSRVs[i].Get());
-    }
+    }   
     m_context->PSSetShaderResources(15, UINT(shadowSRVs.size()),
                                     shadowSRVs.data());
 
@@ -387,52 +295,18 @@ void ExampleApp::Render() {
         i->Render(m_context);
     }
 
-    // 거울 반사를 그릴 필요가 없으면 불투명 거울만 그리기
-    if (m_mirrorAlpha == 1.0f)
-        m_mirror->Render(m_context);
 
     AppBase::SetPipelineState(Graphics::normalsPSO);
     for (auto &i : m_basicList) {
         if (i->m_drawNormals)
             i->RenderNormals(m_context);
     }
-
+     
     AppBase::SetPipelineState(m_drawAsWire ? Graphics::skyboxWirePSO
                                            : Graphics::skyboxSolidPSO);
 
     m_skybox->Render(m_context);
 
-    if (m_mirrorAlpha < 1.0f) { // 거울을 그려야 하는 상황
-
-        // 거울 2. 거울 위치만 StencilBuffer에 1로 표기
-        AppBase::SetPipelineState(Graphics::stencilMaskPSO);
-
-        m_mirror->Render(m_context);
-
-        // 거울 3. 거울 위치에 반사된 물체들을 렌더링
-        AppBase::SetPipelineState(m_drawAsWire ? Graphics::reflectWirePSO
-                                               : Graphics::reflectSolidPSO);
-        AppBase::SetGlobalConsts(m_reflectGlobalConstsGPU);
-
-        m_context->ClearDepthStencilView(m_depthStencilView.Get(),
-                                         D3D11_CLEAR_DEPTH, 1.0f, 0);
-
-        for (auto &i : m_basicList) {
-            i->Render(m_context);
-        }
-
-        AppBase::SetPipelineState(m_drawAsWire
-                                      ? Graphics::reflectSkyboxWirePSO
-                                      : Graphics::reflectSkyboxSolidPSO);
-        m_skybox->Render(m_context);
-
-        // 거울 4. 거울 자체의 재질을 "Blend"로 그림
-        AppBase::SetPipelineState(m_drawAsWire ? Graphics::mirrorBlendWirePSO
-                                               : Graphics::mirrorBlendSolidPSO);
-        AppBase::SetGlobalConsts(m_globalConstsGPU);
-
-        m_mirror->Render(m_context);
-    }
 
     m_context->ResolveSubresource(m_resolvedBuffer.Get(), 0,
                                   m_floatBuffer.Get(), 0,
@@ -528,34 +402,13 @@ void ExampleApp::UpdateGUI() {
     }
 
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Mirror")) {
-
-        ImGui::SliderFloat("Alpha", &m_mirrorAlpha, 0.0f, 1.0f);
-        const float blendColor[4] = {m_mirrorAlpha, m_mirrorAlpha,
-                                     m_mirrorAlpha, 1.0f};
-        if (m_drawAsWire)
-            Graphics::mirrorBlendWirePSO.SetBlendFactor(blendColor);
-        else
-            Graphics::mirrorBlendSolidPSO.SetBlendFactor(blendColor);
-
-        ImGui::SliderFloat("Metallic",
-                           &m_mirror->m_materialConstsCPU.metallicFactor, 0.0f,
-                           1.0f);
-        ImGui::SliderFloat("Roughness",
-                           &m_mirror->m_materialConstsCPU.roughnessFactor, 0.0f,
-                           1.0f);
-
-        ImGui::TreePop();
-    }
-
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Light")) {
         // ImGui::SliderFloat3("Position",
         // &m_globalConstsCPU.lights[0].position.x,
         //                     -5.0f, 5.0f);
-        ImGui::SliderFloat("Radius", &m_globalConstsCPU.lights[1].radius, 0.0f,
+        ImGui::SliderFloat("Radius", &m_globalConstsCPU.lights[0].radius, 0.0f,
                            0.1f);
-        ImGui::TreePop();
+        ImGui::TreePop(); 
     }
 
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);

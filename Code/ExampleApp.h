@@ -39,9 +39,9 @@ class ExampleApp : public AppBase {
     bool m_usePerspectiveProjection = true;
 
     // 거울
-    shared_ptr<Model> m_mirror;
-    DirectX::SimpleMath::Plane m_mirrorPlane;
-    float m_mirrorAlpha = 1.0f; // Opacity
+    //shared_ptr<Model> m_mirror;
+    //DirectX::SimpleMath::Plane m_mirrorPlane;
+    //float m_mirrorAlpha = 1.0f; // Opacity
 
     // 거울이 아닌 물체들의 리스트 (for문으로 그리기 위함)
     vector<shared_ptr<Model>> m_basicList;
