@@ -3,6 +3,7 @@
 #include "D3D11Utils.h"
 
 #include <DirectXTexEXR.h> // EXR 형식 HDRI 읽기
+#include <DirectXTex.h> // TIF파일 읽기
 #include <algorithm>
 #include <directxtk/DDSTextureLoader.h> // 큐브맵 읽을 때 필요
 #include <dxgi.h>                       // DXGIFactory
@@ -189,7 +190,6 @@ void ReadEXRImage(const std::string filename, std::vector<uint8_t> &image,
 
     TexMetadata metadata;
     ThrowIfFailed(GetMetadataFromEXRFile(wFilename.c_str(), metadata));
-
     ScratchImage scratchImage;
     ThrowIfFailed(LoadFromEXRFile(wFilename.c_str(), NULL, scratchImage));
 
@@ -203,7 +203,7 @@ void ReadEXRImage(const std::string filename, std::vector<uint8_t> &image,
     image.resize(scratchImage.GetPixelsSize());
     memcpy(image.data(), scratchImage.GetPixels(), image.size());
 
-    // 데이터 범위 확인해보기
+    // 데이터 범위 확인해보기. 16비트인것으로 가정했음
     vector<float> f32(image.size() / 2);
     uint16_t *f16 = (uint16_t *)image.data();
     for (int i = 0; i < image.size() / 2; i++) {
@@ -219,6 +219,31 @@ void ReadEXRImage(const std::string filename, std::vector<uint8_t> &image,
     // for (int i = 0; i < image.size() / 2; i++) {
     //     f16[i] = fp16_ieee_from_fp32_value(f32[i] * 2.0f);
     // }
+}
+
+void ReadTIFImage(const std::string filename, std::vector<uint8_t> &image,
+                  int &width, int &height, DXGI_FORMAT &pixelFormat) {
+    const std::wstring wFilename(filename.begin(), filename.end());
+     
+    TexMetadata metadata;
+    ScratchImage scratchImage;
+     
+    HRESULT hr = LoadFromWICFile(wFilename.c_str(), WIC_FLAGS_NONE, &metadata,
+                                 scratchImage);
+    if (FAILED(hr)) {
+        std::cerr << "Failed to load TIF image: " << filename << std::endl;
+        return;
+    }
+
+    width = static_cast<int>(metadata.width);
+    height = static_cast<int>(metadata.height);
+    pixelFormat = metadata.format;
+
+    std::cout << filename << " " << width << " " << height << " " << pixelFormat
+              << std::endl;
+
+    image.resize(scratchImage.GetPixelsSize());
+    memcpy(image.data(), scratchImage.GetPixels(), image.size());
 }
 
 void ReadImage(const std::string filename, std::vector<uint8_t> &image,
@@ -272,6 +297,50 @@ void ReadImage(const std::string filename, std::vector<uint8_t> &image,
     delete[] img;
 }
 
+size_t GetPixelSize(DXGI_FORMAT pixelFormat) {
+    switch (pixelFormat) {
+    case DXGI_FORMAT_R8G8B8A8_UNORM:
+    case DXGI_FORMAT_R8G8B8A8_UINT:
+    case DXGI_FORMAT_R8G8B8A8_SNORM:
+    case DXGI_FORMAT_R8G8B8A8_SINT:
+    case DXGI_FORMAT_B8G8R8A8_UNORM:
+    case DXGI_FORMAT_R8G8B8A8_UNORM_SRGB:
+    case DXGI_FORMAT_B8G8R8A8_UNORM_SRGB:
+        return sizeof(uint8_t) * 4;
+
+    case DXGI_FORMAT_R16G16B16A16_FLOAT:
+    case DXGI_FORMAT_R16G16B16A16_UNORM:
+    case DXGI_FORMAT_R16G16B16A16_UINT:
+    case DXGI_FORMAT_R16G16B16A16_SNORM:
+    case DXGI_FORMAT_R16G16B16A16_SINT:
+        return sizeof(uint16_t) * 4;
+
+    case DXGI_FORMAT_R16_UNORM:
+    case DXGI_FORMAT_R16_UINT:
+    case DXGI_FORMAT_R16_SNORM:
+    case DXGI_FORMAT_R16_SINT:
+    case DXGI_FORMAT_R16_FLOAT:
+        return sizeof(uint16_t);
+
+    case DXGI_FORMAT_R32G32B32A32_FLOAT:
+    case DXGI_FORMAT_R32G32B32A32_UINT:
+    case DXGI_FORMAT_R32G32B32A32_SINT:
+        return sizeof(uint32_t) * 4;
+
+    case DXGI_FORMAT_R32G32B32_FLOAT:
+    case DXGI_FORMAT_R32G32B32_UINT:
+    case DXGI_FORMAT_R32G32B32_SINT:
+        return sizeof(uint32_t) * 3;
+
+    case DXGI_FORMAT_R32_FLOAT:
+    case DXGI_FORMAT_R32_UINT:
+    case DXGI_FORMAT_R32_SINT:
+        return sizeof(uint32_t);
+
+    default:
+        return 0; // 알 수 없는 포맷의 경우 0 반환
+    }
+}
 ComPtr<ID3D11Texture2D>
 CreateStagingTexture(ComPtr<ID3D11Device> &device,
                      ComPtr<ID3D11DeviceContext> &context, const int width,
@@ -298,11 +367,8 @@ CreateStagingTexture(ComPtr<ID3D11Device> &device,
     }
 
     // CPU에서 이미지 데이터 복사
-    size_t pixelSize = sizeof(uint8_t) * 4;
-    if (pixelFormat == DXGI_FORMAT_R16G16B16A16_FLOAT) {
-        pixelSize = sizeof(uint16_t) * 4;
-    }
-
+    size_t pixelSize = GetPixelSize(pixelFormat); 
+      
     D3D11_MAPPED_SUBRESOURCE ms;
     context->Map(stagingTexture.Get(), NULL, D3D11_MAP_WRITE, NULL, &ms);
     uint8_t *pData = (uint8_t *)ms.pData;
@@ -377,35 +443,73 @@ void D3D11Utils::CreateMetallicRoughnessTexture(
         int rWidth = 0, rHeight = 0;
         std::vector<uint8_t> mImage;
         std::vector<uint8_t> rImage;
+        DXGI_FORMAT mPixelFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+        DXGI_FORMAT rPixelFormat = DXGI_FORMAT_R8G8B8A8_UNORM;
+
 
         // (거의 없겠지만) 둘 중 하나만 있을 경우도 고려하기 위해 각각 파일명
         // 확인
         if (!metallicFilename.empty()) {
-            ReadImage(metallicFilename, mImage, mWidth, mHeight);
+
+            string ext(metallicFilename.end() - 3, metallicFilename.end());
+            std::transform(ext.begin(), ext.end(), ext.begin(), std::tolower);
+
+            if (ext == "exr") {
+                ReadEXRImage(metallicFilename, mImage, mWidth, mHeight,
+                             mPixelFormat);
+            } else if (ext == "tif") {
+                ReadTIFImage(metallicFilename, mImage, mWidth, mHeight,
+                             mPixelFormat);
+            } else {
+                ReadImage(metallicFilename, mImage, mWidth, mHeight);
+            }
+           
         }
 
         if (!roughnessFilename.empty()) {
-            ReadImage(roughnessFilename, rImage, rWidth, rHeight);
+
+            string ext(roughnessFilename.end() - 3, roughnessFilename.end());
+            std::transform(ext.begin(), ext.end(), ext.begin(), std::tolower);
+
+            if (ext == "exr") {
+                ReadEXRImage(roughnessFilename, rImage, rWidth, rHeight,
+                             rPixelFormat);
+            } else if (ext == "tif") {
+                ReadTIFImage(roughnessFilename, rImage, rWidth, rHeight,
+                             rPixelFormat);
+            } else {
+                ReadImage(roughnessFilename, rImage, rWidth, rHeight);
+            }
+           
         }
 
         // 두 이미지의 해상도가 같다고 가정
         if (!metallicFilename.empty() && !roughnessFilename.empty()) {
             assert(mWidth == rWidth);
             assert(mHeight == rHeight);
+            assert(mPixelFormat == rPixelFormat);
         }
+ 
 
-        vector<uint8_t> combinedImage(size_t(mWidth * mHeight) * 4);
+        size_t pixelSize = GetPixelSize(mPixelFormat);
+
+        //둘 중 하나만 파일을 받는다면, 비어있지 않은 쪽의 Width와 Height를 받음
+        int width = !metallicFilename.empty() ? mWidth : rWidth;
+        int height = !metallicFilename.empty() ? mHeight : rHeight;
+
+        vector<uint8_t> combinedImage(size_t(width * height) * pixelSize);
         fill(combinedImage.begin(), combinedImage.end(), 0);
-
-        for (size_t i = 0; i < size_t(mWidth * mHeight); i++) {
+        
+        //pixelFormat형식이 DXGI_FORMAT_R8G8B8A8_UNORM라고만 가정
+        for (size_t i = 0; i < size_t(width * height); i++) {
             if (rImage.size())
                 combinedImage[4 * i + 1] = rImage[4 * i]; // Green = Roughness
             if (mImage.size())
                 combinedImage[4 * i + 2] = mImage[4 * i]; // Blue = Metalness
         }
 
-        CreateTextureHelper(device, context, mWidth, mHeight, combinedImage,
-                            DXGI_FORMAT_R8G8B8A8_UNORM, texture, srv);
+        CreateTextureHelper(device, context, width, height, combinedImage,
+                            mPixelFormat, texture, srv);
     }
 }
 
@@ -423,9 +527,16 @@ void D3D11Utils::CreateTexture(ComPtr<ID3D11Device> &device,
     string ext(filename.end() - 3, filename.end());
     std::transform(ext.begin(), ext.end(), ext.begin(), std::tolower);
 
+   
+
     if (ext == "exr") {
         ReadEXRImage(filename, image, width, height, pixelFormat);
-    } else {
+    }
+    else if (ext == "tif")
+    {
+        ReadTIFImage(filename, image, width, height, pixelFormat);
+    }
+    else {
         ReadImage(filename, image, width, height);
     }
 
@@ -581,5 +692,6 @@ void D3D11Utils::WriteToFile(ComPtr<ID3D11Device> &device,
 
     cout << filename << endl;
 }
+
 
 } // namespace hlab

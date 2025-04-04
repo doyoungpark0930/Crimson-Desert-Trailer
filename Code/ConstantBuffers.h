@@ -73,8 +73,8 @@ struct Light {
     Vector3 radiance = Vector3(5.0f); // strength
     float fallOffStart = 0.0f;
     Vector3 direction = Vector3(0.0f, 0.0f, 1.0f);
-    float fallOffEnd = 20.0f;
-    Vector3 position = Vector3(0.0f, 0.0f, -2.0f);
+    float fallOffEnd = 100.0f;
+    Vector3 position = Vector3(0.0f, 5.0f, -2.0f);
     float spotPower = 6.0f;
 
     // Light type bitmasking
@@ -96,7 +96,7 @@ __declspec(align(256)) struct GlobalConstants {
     Matrix invViewProj; // Proj -> World
 
     Vector3 eyeWorld;
-    float strengthIBL = 0.0f;
+    float strengthIBL = 0.05f;
 
     int textureToDraw = 0; // 0: Env, 1: Specular, 2: Irradiance, 그외: 검은색
     float envLodBias = 0.0f; // 환경맵 LodBias

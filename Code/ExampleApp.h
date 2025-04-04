@@ -29,8 +29,10 @@ class ExampleApp : public AppBase {
   protected:
     shared_ptr<Model> m_ground;
     shared_ptr<Model> m_mainObj;
+    shared_ptr<Model> m_testObj;
     shared_ptr<Model> m_lightSphere[MAX_LIGHTS];
     shared_ptr<Model> m_skybox;
+    shared_ptr<Model> m_mountain;
     shared_ptr<Model> m_cursorSphere;
     shared_ptr<Model> m_screenSquare;
 
@@ -45,6 +47,7 @@ class ExampleApp : public AppBase {
 
     // 거울이 아닌 물체들의 리스트 (for문으로 그리기 위함)
     vector<shared_ptr<Model>> m_basicList;
+    vector<shared_ptr<Model>> m_tessellatedList;
 };
 
 } // namespace hlab

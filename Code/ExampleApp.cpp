@@ -17,46 +17,65 @@ using namespace DirectX::SimpleMath;
 
 ExampleApp::ExampleApp() : AppBase() {}
 
-bool ExampleApp::Initialize() { 
+bool ExampleApp::Initialize() {
 
     if (!AppBase::Initialize())
         return false;
-
-    AppBase::InitCubemaps(L"../Assets/Textures/Cubemaps/HDRI/EveningSky/",
-                          L"EveningSkyEnvHDR.dds", L"EveningSkySpecularHDR.dds",
-                          L"EveningSkyDiffuseHDR.dds", L"EveningSkyBrdf.dds");
-
-    // 후처리용 화면 사각형
+     
+    AppBase::InitCubemaps(L"../Assets/Textures/Cubemaps/HDRI/mountain1/",
+                          L"mountain1EnvHDR.dds", L"mountain1SpecularHDR.dds",
+                          L"mountain1DiffuseHDR.dds", L"mountain1Brdf.dds");
+     
+    // 후처리용 화면 사각형 
     {
-        MeshData meshData = GeometryGenerator::MakeSquare();
+        MeshData meshData = GeometryGenerator::MakeSquare(); 
         m_screenSquare =
             make_shared<Model>(m_device, m_context, vector{meshData});
     }
-
-    // 환경 박스 초기화
-    {
-        MeshData skyboxMesh = GeometryGenerator::MakeBox(50.0f);
+     
+    // 환경 박스 및 배경 
+    { 
+        MeshData skyboxMesh = GeometryGenerator::MakeBox(100.0f);
         std::reverse(skyboxMesh.indices.begin(), skyboxMesh.indices.end());
         m_skybox = make_shared<Model>(m_device, m_context, vector{skyboxMesh});
+    }   
+            
+    // 테셀레이션 바닥    
+    {  
+            
+        auto ground = GeometryGenerator::MakeSquareGridQuad(20.0f, 20.0f, 100.0f,
+                                                            {10.0f, 10.0f});  
+         
+        ground.albedoTextureFilename =
+            "../Assets/Textures/PBR/TCom_Ground_SandDesert2_2K/"
+            "TCom_Ground_SandDesert2_3x3_2K_albedo.tif"; 
+         
+        ground.normalTextureFilename =
+            "../Assets/Textures/PBR/TCom_Ground_SandDesert2_2K/"
+            "TCom_Ground_SandDesert2_3x3_2K_normal.tif";
 
-    }
+        ground.heightTextureFilename =
+            "../Assets/Textures/PBR/TCom_Ground_SandDesert2_2K/"
+            "TCom_Ground_SandDesert2_3x3_2K_height.tif";
 
-    // 바닥
-    { 
-        auto mesh = GeometryGenerator::MakeSquare(50.0);
-        // mesh.albedoTextureFilename =
-        //     "../Assets/Textures/blender_uv_grid_2k.png";
-        m_ground = make_shared<Model>(m_device, m_context, vector{mesh});
+        ground.aoTextureFilename = "../Assets/Textures/PBR/TCom_Ground_SandDesert2_2K/"
+                                   "TCom_Ground_SandDesert2_2K_ao.tif"; 
+        ground.roughnessTextureFilename =
+            "../Assets/Textures/PBR/TCom_Ground_SandDesert2_2K/"
+             "TCom_Ground_SandDesert2_3x3_2K_roughness.tif";
+          
+        m_ground = make_shared<Model>(m_device, m_context, vector{ground});
         m_ground->m_materialConstsCPU.albedoFactor = Vector3(0.1f);
         m_ground->m_materialConstsCPU.emissionFactor = Vector3(0.0f);
-        m_ground->m_materialConstsCPU.metallicFactor = 0.5f;
-        m_ground->m_materialConstsCPU.roughnessFactor = 0.3f;
-
+        m_ground->m_materialConstsCPU.metallicFactor = 0.0f;
+        m_ground->m_materialConstsCPU.roughnessFactor = 0.0f;
+         
         Vector3 position = Vector3(0.0f, 0.0f, 2.0f);
         m_ground->UpdateWorldRow(Matrix::CreateRotationX(3.141592f * 0.5f) *
+                                 Matrix::CreateRotationY(3.141592f * 0.25f)*
                                  Matrix::CreateTranslation(position));
 
-        m_basicList.push_back(m_ground); 
+        m_tessellatedList.push_back(m_ground);
     }
 
     // Main Object
@@ -68,9 +87,6 @@ bool ExampleApp::Initialize() {
         //     "../Assets/Models/medieval_vagrant_knights/", "scene.gltf",
         //     true);
 
-        // 컴퓨터가 느릴 때는 간단한 물체로 테스트 하세요.
-        vector<MeshData> meshes = {GeometryGenerator::MakeSphere(0.8f, 50, 50)};
-
         // string path = "../Assets/Characters/armored-female-future-soldier/";
         // auto meshes = GeometryGenerator::ReadFromFile(path,
         // "angel_armor.fbx"); meshes[0].albedoTextureFilename = path +
@@ -79,8 +95,11 @@ bool ExampleApp::Initialize() {
         // "/angel_armor_metalness.jpg"; meshes[0].normalTextureFilename = path
         // + "/angel_armor_normal.jpg"; meshes[0].roughnessTextureFilename =
         //     path + "/angel_armor_roughness.jpg";
+        
+        // 컴퓨터가 느릴 때는 간단한 물체로 테스트 하세요.
+        vector<MeshData> meshes = {GeometryGenerator::MakeSphere(0.4f, 50, 50)}; 
 
-        Vector3 center(0.0f, 0.0f, 2.0f);
+        Vector3 center(0.0f, 0.0f, 0.7f);
         m_mainObj = make_shared<Model>(m_device, m_context, meshes);
         m_mainObj->m_materialConstsCPU.invertNormalMapY = true; // GLTF는 true로
         m_mainObj->m_materialConstsCPU.albedoFactor = Vector3(1.0f);
@@ -90,23 +109,43 @@ bool ExampleApp::Initialize() {
 
         m_basicList.push_back(m_mainObj); // 리스트에 등록
 
+        auto rock = GeometryGenerator::ReadFromFile(
+             "../Assets/Textures/Objects/Rock_9/", "Rock_9.fbx");
 
+        rock[0].albedoTextureFilename =
+            "../Assets/Textures/Objects/Rock_9/Rock_9_Base_Color.jpg";
+
+        rock[0].normalTextureFilename = "../Assets/Textures/Objects/Rock_9/"
+                                       "Rock_9_Normal.jpg";
+
+        rock[0].aoTextureFilename = "../Assets/Textures/Objects/Rock_9/"
+                                   "Rock_9_Mixed_AO.jpg";
+
+        m_testObj = make_shared<Model>(m_device, m_context, rock);
+        m_testObj->m_materialConstsCPU.invertNormalMapY = false; // GLTF는 true로
+        m_testObj->m_materialConstsCPU.albedoFactor = Vector3(1.0f);
+        m_testObj->m_materialConstsCPU.roughnessFactor = 0.3f;
+        m_testObj->m_materialConstsCPU.metallicFactor = 0.0f;
+        m_testObj->UpdateWorldRow(Matrix::CreateTranslation(Vector3(-5.0f,0.1f,0.0f)));
+
+        m_basicList.push_back(m_testObj); // 리스트에 등록
+
+
+         
 
     }
 
-
-    // 조명 설정
-    { 
+    // 조명 설정 
+    {
         // 조명 0은 고정
         m_globalConstsCPU.lights[0].radiance = Vector3(5.0f);
-        m_globalConstsCPU.lights[0].position = Vector3(0.0f, 1.5f, 1.1f);
-        m_globalConstsCPU.lights[0].direction = Vector3(0.0f, -1.0f, 0.0f);
-        m_globalConstsCPU.lights[0].spotPower = 3.0f;
+        m_globalConstsCPU.lights[0].position = Vector3(0.0f, 0.5f, 0.0f);
+        m_globalConstsCPU.lights[0].direction = Vector3(1.75f, -1.0f, -2.35f);
+        m_globalConstsCPU.lights[0].spotPower = 1.5f;
         m_globalConstsCPU.lights[0].radius = 0.02f;
         m_globalConstsCPU.lights[0].type =
-            LIGHT_SPOT | LIGHT_SHADOW; // Point with shadow    
-
-    }
+            LIGHT_SPOT | LIGHT_SHADOW; // Point with shadow
+    }  
 
     // 조명 위치 표시
     {
@@ -129,22 +168,19 @@ bool ExampleApp::Initialize() {
         }
     }
 
-
-
     return true;
 }
 
 void ExampleApp::UpdateLights(float dt) {
-    
-      
-    // 그림자맵을 만들기 위한 시점 
+
+    // 그림자맵을 만들기 위한 시점
     for (int i = 0; i < MAX_LIGHTS; i++) {
         const auto &light = m_globalConstsCPU.lights[i];
         if (light.type & LIGHT_SHADOW) {
 
             Vector3 up = Vector3(0.0f, 1.0f, 0.0f);
             if (abs(up.Dot(light.direction) + 1.0f) < 1e-5)
-                up = Vector3(1.0f, 0.0f, 0.0f);
+                up = Vector3(1.0f, 0.0f, 0.0f); 
 
             // 그림자맵을 만들 때 필요
             Matrix lightViewRow = XMMatrixLookAtLH(
@@ -192,7 +228,7 @@ void ExampleApp::Update(float dt) {
 
     // 카메라의 이동
     m_camera.UpdateKeyboard(dt, m_keyPressed);
-     
+
     // 반사 행렬 추가
     const Vector3 eyeWorld = m_camera.GetEyePos();
     const Matrix reflectRow;
@@ -204,7 +240,6 @@ void ExampleApp::Update(float dt) {
     // 공용 ConstantBuffer 업데이트
     AppBase::UpdateGlobalConstants(eyeWorld, viewRow, projRow, reflectRow);
 
-
     // 조명의 위치 반영
     for (int i = 0; i < MAX_LIGHTS; i++)
         m_lightSphere[i]->UpdateWorldRow(
@@ -212,8 +247,10 @@ void ExampleApp::Update(float dt) {
                 std::max(0.01f, m_globalConstsCPU.lights[i].radius)) *
             Matrix::CreateTranslation(m_globalConstsCPU.lights[i].position));
 
-
     for (auto &i : m_basicList) {
+        i->UpdateConstantBuffers(m_device, m_context);
+    }
+    for (auto &i : m_tessellatedList) {
         i->UpdateConstantBuffers(m_device, m_context);
     }
 }
@@ -227,14 +264,16 @@ void ExampleApp::Render() {
                              Graphics::sampleStates.data());
     m_context->PSSetSamplers(0, UINT(Graphics::sampleStates.size()),
                              Graphics::sampleStates.data());
-
+    m_context->DSSetSamplers(0, UINT(Graphics::sampleStates.size()),
+                             Graphics::sampleStates.data());
+     
     // 공용 텍스춰들: "Common.hlsli"에서 register(t10)부터 시작
     vector<ID3D11ShaderResourceView *> commonSRVs = {
         m_envSRV.Get(), m_specularSRV.Get(), m_irradianceSRV.Get(),
         m_brdfSRV.Get()};
     m_context->PSSetShaderResources(10, UINT(commonSRVs.size()),
                                     commonSRVs.data());
-
+          
     const float clearColor[4] = {0.0f, 0.0f, 0.0f, 1.0f};
     vector<ID3D11RenderTargetView *> rtvs = {m_floatRTV.Get()};
 
@@ -244,9 +283,11 @@ void ExampleApp::Render() {
                                      1.0f, 0);
     AppBase::SetPipelineState(Graphics::depthOnlyPSO);
     AppBase::SetGlobalConsts(m_globalConstsGPU);
-    for (auto &i : m_basicList)
-        i->Render(m_context);
-    //m_skybox->Render(m_context);
+    //for (auto &i : m_basicList) 
+        //i->Render(m_context);
+    //for (auto &i : m_tessellatedList)
+        //i->TessellatedRender(m_context); 
+    // m_skybox->Render(m_context);
 
     // 그림자맵 만들기
     AppBase::SetShadowViewport(); // 그림자맵 해상도
@@ -257,11 +298,15 @@ void ExampleApp::Render() {
             m_context->OMSetRenderTargets(0, NULL, m_shadowDSVs[i].Get());
             m_context->ClearDepthStencilView(m_shadowDSVs[i].Get(),
                                              D3D11_CLEAR_DEPTH, 1.0f, 0);
+              
             AppBase::SetGlobalConsts(m_shadowGlobalConstsGPU[i]);
-            for (auto &i : m_basicList)
-                if (i->m_castShadow && i->m_isVisible)
-                    i->Render(m_context);
-            //m_skybox->Render(m_context);
+            //for (auto &i : m_basicList)
+                //if (i->m_castShadow && i->m_isVisible)
+                    //i->Render(m_context);
+            //for (auto &i : m_tessellatedList)
+                //if (i->m_castShadow && i->m_isVisible)
+                    //i->TessellatedRender(m_context);
+            // m_skybox->Render(m_context);
         }
     }
 
@@ -274,44 +319,47 @@ void ExampleApp::Render() {
     }
     m_context->OMSetRenderTargets(UINT(rtvs.size()), rtvs.data(),
                                   m_depthStencilView.Get());
-
+     
     // 그림자맵들도 공용 텍스춰들 이후에 추가
     // 주의: 마지막 shadowDSV를 RenderTarget에서 해제한 후 설정
-    vector<ID3D11ShaderResourceView *> shadowSRVs;
+    vector<ID3D11ShaderResourceView *> shadowSRVs; 
     for (int i = 0; i < MAX_LIGHTS; i++) {
         shadowSRVs.push_back(m_shadowSRVs[i].Get());
-    }   
-    m_context->PSSetShaderResources(15, UINT(shadowSRVs.size()),
+    }
+    m_context->PSSetShaderResources(15, UINT(shadowSRVs.size()), 
                                     shadowSRVs.data());
 
     m_context->ClearDepthStencilView(m_depthStencilView.Get(),
                                      D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL,
-                                     1.0f, 0);
+                                     1.0f, 0); 
     AppBase::SetPipelineState(m_drawAsWire ? Graphics::defaultWirePSO
                                            : Graphics::defaultSolidPSO);
-    AppBase::SetGlobalConsts(m_globalConstsGPU);
+    AppBase::SetGlobalConsts(m_globalConstsGPU);  
 
-    for (auto &i : m_basicList) {
-        i->Render(m_context);
+    for (auto &i : m_basicList) { 
+        i->Render(m_context); 
     }
-
+    AppBase::SetPipelineState(m_drawAsWire ? Graphics::tessellatedWirePSO
+                                           : Graphics::tessellatedSolidPSO);
+    AppBase::SetGlobalConsts(m_globalConstsGPU);
+    for (auto &i : m_tessellatedList)
+        i->TessellatedRender(m_context);
 
     AppBase::SetPipelineState(Graphics::normalsPSO);
     for (auto &i : m_basicList) {
         if (i->m_drawNormals)
             i->RenderNormals(m_context);
     }
-     
+
     AppBase::SetPipelineState(m_drawAsWire ? Graphics::skyboxWirePSO
                                            : Graphics::skyboxSolidPSO);
 
     m_skybox->Render(m_context);
 
-
     m_context->ResolveSubresource(m_resolvedBuffer.Get(), 0,
                                   m_floatBuffer.Get(), 0,
                                   DXGI_FORMAT_R16G16B16A16_FLOAT);
-
+     
     // PostEffects
     AppBase::SetPipelineState(Graphics::postEffectsPSO);
 
@@ -330,7 +378,7 @@ void ExampleApp::Render() {
     m_context->OMSetRenderTargets(1, m_postEffectsRTV.GetAddressOf(), NULL);
     m_context->PSSetConstantBuffers(3, 1,
                                     m_postEffectsConstsGPU.GetAddressOf());
-    m_screenSquare->Render(m_context);
+    m_screenSquare->Render(m_context); 
 
     // 단순 이미지 처리와 블룸
     AppBase::SetPipelineState(Graphics::postProcessingPSO);
@@ -352,7 +400,7 @@ void ExampleApp::UpdateGUI() {
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Skybox")) {
         ImGui::SliderFloat("Strength", &m_globalConstsCPU.strengthIBL, 0.0f,
-                           5.0f);
+                           2.0f);
         ImGui::RadioButton("Env", &m_globalConstsCPU.textureToDraw, 0);
         ImGui::SameLine();
         ImGui::RadioButton("Specular", &m_globalConstsCPU.textureToDraw, 1);
@@ -408,9 +456,24 @@ void ExampleApp::UpdateGUI() {
         //                     -5.0f, 5.0f);
         ImGui::SliderFloat("Radius", &m_globalConstsCPU.lights[0].radius, 0.0f,
                            0.1f);
+        ImGui::SliderFloat("PositionX", &m_globalConstsCPU.lights[0].position.x, -100.0f,
+                           100.0f);
+        ImGui::SliderFloat("PositionY", &m_globalConstsCPU.lights[0].position.y,
+                           0.0f, 10.0f);
+        ImGui::SliderFloat("PositionZ", &m_globalConstsCPU.lights[0].position.z,
+                           0.0f, 100.0f);
+        ImGui::SliderFloat("DirectionX", &m_globalConstsCPU.lights[0].direction.x,
+                           -20.0f, 10.0f);
+        ImGui::SliderFloat("DirectionY", &m_globalConstsCPU.lights[0].direction.y,
+                           -10.0f, 10.0f);  
+        ImGui::SliderFloat("DirectionZ", &m_globalConstsCPU.lights[0].direction.z,
+                           -10.0f, 10.0f);
+        ImGui::SliderFloat("SpotPower",
+                           &m_globalConstsCPU.lights[0].spotPower, 0.0f,
+                           10.0f);
         ImGui::TreePop(); 
     }
-
+     
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Material")) {
         ImGui::SliderFloat("LodBias", &m_globalConstsCPU.lodBias, 0.0f, 10.0f);
@@ -418,30 +481,30 @@ void ExampleApp::UpdateGUI() {
         int flag = 0;
 
         flag += ImGui::SliderFloat(
-            "Metallic", &m_mainObj->m_materialConstsCPU.metallicFactor, 0.0f,
-            1.0f);
+            "Metallic", &m_ground->m_materialConstsCPU.metallicFactor, 0.0f,
+            1.0f); 
         flag += ImGui::SliderFloat(
-            "Roughness", &m_mainObj->m_materialConstsCPU.roughnessFactor, 0.0f,
+            "Roughness", &m_ground->m_materialConstsCPU.roughnessFactor, 0.0f,
             1.0f);
+        flag += ImGui::CheckboxFlags( 
+            "AlbedoTexture", &m_ground->m_materialConstsCPU.useAlbedoMap, 1);
         flag += ImGui::CheckboxFlags(
-            "AlbedoTexture", &m_mainObj->m_materialConstsCPU.useAlbedoMap, 1);
-        flag += ImGui::CheckboxFlags(
-            "EmissiveTexture", &m_mainObj->m_materialConstsCPU.useEmissiveMap,
+            "EmissiveTexture", &m_ground->m_materialConstsCPU.useEmissiveMap,
             1);
         flag += ImGui::CheckboxFlags(
-            "Use NormalMapping", &m_mainObj->m_materialConstsCPU.useNormalMap,
+            "Use NormalMapping", &m_ground->m_materialConstsCPU.useNormalMap,
             1);
         flag += ImGui::CheckboxFlags(
-            "Use AO", &m_mainObj->m_materialConstsCPU.useAOMap, 1);
+            "Use AO", &m_ground->m_materialConstsCPU.useAOMap, 1);
         flag += ImGui::CheckboxFlags(
-            "Use HeightMapping", &m_mainObj->m_meshConstsCPU.useHeightMap, 1);
+            "Use HeightMapping", &m_ground->m_meshConstsCPU.useHeightMap, 1);
         flag += ImGui::SliderFloat(
-            "HeightScale", &m_mainObj->m_meshConstsCPU.heightScale, 0.0f, 0.1f);
+            "HeightScale", &m_ground->m_meshConstsCPU.heightScale, 0.0f, 0.5f);
         flag += ImGui::CheckboxFlags(
-            "Use MetallicMap", &m_mainObj->m_materialConstsCPU.useMetallicMap,
+            "Use MetallicMap", &m_ground->m_materialConstsCPU.useMetallicMap,
             1);
         flag += ImGui::CheckboxFlags(
-            "Use RoughnessMap", &m_mainObj->m_materialConstsCPU.useRoughnessMap,
+            "Use RoughnessMap", &m_ground->m_materialConstsCPU.useRoughnessMap,
             1);
 
         if (flag) {

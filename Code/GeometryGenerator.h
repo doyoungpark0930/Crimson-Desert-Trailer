@@ -22,6 +22,9 @@ class GeometryGenerator {
     static MeshData MakeSquareGrid(const int numSlices, const int numStacks,
                                    const float scale = 1.0f,
                                    const Vector2 texScale = Vector2(1.0f));
+    static MeshData MakeSquareGridQuad(const int numSlices, const int numStacks,
+                                   const float scale = 1.0f,
+                                   const Vector2 texScale = Vector2(1.0f));
     static MeshData MakeBox(const float scale = 1.0f);
     static MeshData MakeCylinder(const float bottomRadius,
                                  const float topRadius, float height,

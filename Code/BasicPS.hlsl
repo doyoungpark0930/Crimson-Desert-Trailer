@@ -43,10 +43,15 @@ struct PixelShaderOutput
 float3 GetNormal(PixelShaderInput input)
 {
     float3 normalWorld = normalize(input.normalWorld);
+    //내가 만든 것
+    float dist = length(eyeWorld - input.posWorld);
+    float distMin = 0.5;
+    float distMax = 70.0;
+    float testLod = 10- 10 * saturate((distMax - dist) / (distMax - distMin));
     
     if (useNormalMap) // NormalWorld를 교체
     {
-        float3 normal = normalTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).rgb;
+        float3 normal = normalTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).rgb;
         normal = 2.0 * normal - 1.0; // 범위 조절 [-1.0, 1.0]
 
         // OpenGL 용 노멀맵일 경우에는 y 방향을 뒤집어줍니다.
@@ -297,14 +302,20 @@ PixelShaderOutput main(PixelShaderInput input)
     float3 pixelToEye = normalize(eyeWorld - input.posWorld);
     float3 normalWorld = GetNormal(input);
     
-    float3 albedo = useAlbedoMap ? albedoTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).rgb * albedoFactor
+    //내가 만든 것
+    float dist = length(eyeWorld - input.posWorld);
+    float distMin = 0.5;
+    float distMax = 70.0;
+    float testLod = 10 - 10 * saturate((distMax - dist) / (distMax - distMin));
+    
+    float3 albedo = useAlbedoMap ? albedoTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).rgb * albedoFactor
                                  : albedoFactor;
-    float ao = useAOMap ? aoTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).r : 1.0;
-    float metallic = useMetallicMap ? metallicRoughnessTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).b * metallicFactor
+    float ao = useAOMap ? aoTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).rgb : 1.0;
+    float metallic = useMetallicMap ? metallicRoughnessTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).b * metallicFactor
                                     : metallicFactor;
-    float roughness = useRoughnessMap ? metallicRoughnessTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).g * roughnessFactor
+    float roughness = useRoughnessMap ? metallicRoughnessTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).g * roughnessFactor
                                       : roughnessFactor;
-    float3 emission = useEmissiveMap ? emissiveTex.SampleLevel(linearWrapSampler, input.texcoord, lodBias).rgb
+    float3 emission = useEmissiveMap ? emissiveTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).rgb
                                      : emissionFactor;
 
     float3 ambientLighting = AmbientLightingByIBL(albedo, normalWorld, pixelToEye, ao, metallic, roughness) * strengthIBL;

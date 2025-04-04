@@ -31,6 +31,8 @@ class Model {
 
     void Render(ComPtr<ID3D11DeviceContext> &context);
 
+    void TessellatedRender(ComPtr<ID3D11DeviceContext> &context);
+
     void RenderNormals(ComPtr<ID3D11DeviceContext> &context);
 
     void UpdateWorldRow(const Matrix &worldRow);
@@ -45,6 +47,7 @@ class Model {
     bool m_drawNormals = false;
     bool m_isVisible = true;
     bool m_castShadow = true;
+
 
     std::vector<shared_ptr<Mesh>> m_meshes;
 

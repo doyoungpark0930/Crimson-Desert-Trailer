@@ -28,6 +28,7 @@ ComPtr<ID3D11BlendState> mirrorBS;
 
 // Shaders
 ComPtr<ID3D11VertexShader> basicVS;
+ComPtr<ID3D11VertexShader> tessellatedQuadVS;
 ComPtr<ID3D11VertexShader> skyboxVS;
 ComPtr<ID3D11VertexShader> samplingVS;
 ComPtr<ID3D11VertexShader> normalVS;
@@ -42,7 +43,11 @@ ComPtr<ID3D11PixelShader> normalPS;
 ComPtr<ID3D11PixelShader> depthOnlyPS;
 ComPtr<ID3D11PixelShader> postEffectsPS;
 
+
 ComPtr<ID3D11GeometryShader> normalGS;
+
+ComPtr<ID3D11HullShader> tessellatedQuadHS;
+ComPtr<ID3D11DomainShader> tessellatedQuadDS;
 
 // Input Layouts
 ComPtr<ID3D11InputLayout> basicIL;
@@ -53,6 +58,8 @@ ComPtr<ID3D11InputLayout> postProcessingIL;
 // Graphics Pipeline States
 GraphicsPSO defaultSolidPSO;
 GraphicsPSO defaultWirePSO;
+GraphicsPSO tessellatedSolidPSO;
+GraphicsPSO tessellatedWirePSO;
 GraphicsPSO stencilMaskPSO;
 GraphicsPSO reflectSolidPSO;
 GraphicsPSO reflectWirePSO;
@@ -111,8 +118,7 @@ void Graphics::InitSamplers(ComPtr<ID3D11Device> &device) {
     sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_BORDER;
     sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_BORDER;
     sampDesc.BorderColor[0] = 100.0f; // Å« Z°ª
-    sampDesc.Filter =
-        D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
+    sampDesc.Filter = D3D11_FILTER_COMPARISON_MIN_MAG_LINEAR_MIP_POINT;
     sampDesc.ComparisonFunc = D3D11_COMPARISON_LESS_EQUAL;
     device->CreateSamplerState(&sampDesc, shadowCompareSS.GetAddressOf());
 
@@ -291,6 +297,8 @@ void Graphics::InitShaders(ComPtr<ID3D11Device> &device) {
 
     D3D11Utils::CreateVertexShaderAndInputLayout(device, L"BasicVS.hlsl",
                                                  basicIEs, basicVS, basicIL);
+    D3D11Utils::CreateVertexShaderAndInputLayout(
+        device, L"TessellatedQuadVS.hlsl", basicIEs, tessellatedQuadVS, basicIL);
     D3D11Utils::CreateVertexShaderAndInputLayout(device, L"NormalVS.hlsl",
                                                  basicIEs, normalVS, basicIL);
     D3D11Utils::CreateVertexShaderAndInputLayout(
@@ -309,7 +317,13 @@ void Graphics::InitShaders(ComPtr<ID3D11Device> &device) {
     D3D11Utils::CreatePixelShader(device, L"DepthOnlyPS.hlsl", depthOnlyPS);
     D3D11Utils::CreatePixelShader(device, L"PostEffectsPS.hlsl", postEffectsPS);
 
+
     D3D11Utils::CreateGeometryShader(device, L"NormalGS.hlsl", normalGS);
+
+    D3D11Utils::CreateHullShader(device, L"TessellatedQuadHS.hlsl",
+                                 tessellatedQuadHS);
+    D3D11Utils::CreateDomainShader(device, L"TessellatedQuadDS.hlsl",
+                                   tessellatedQuadDS);
 }
 
 void Graphics::InitPipelineStates(ComPtr<ID3D11Device> &device) {
@@ -324,6 +338,19 @@ void Graphics::InitPipelineStates(ComPtr<ID3D11Device> &device) {
     // defaultWirePSO
     defaultWirePSO = defaultSolidPSO;
     defaultWirePSO.m_rasterizerState = wireRS;
+
+    // tessellatedSolidPSO;
+    tessellatedSolidPSO.m_vertexShader = tessellatedQuadVS;
+    tessellatedSolidPSO.m_hullShader = tessellatedQuadHS;
+    tessellatedSolidPSO.m_domainShader = tessellatedQuadDS;
+    tessellatedSolidPSO.m_inputLayout = basicIL;
+    tessellatedSolidPSO.m_pixelShader = basicPS;
+    tessellatedSolidPSO.m_rasterizerState = solidRS;
+    tessellatedSolidPSO.m_primitiveTopology =
+        D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST;
+
+    tessellatedWirePSO = tessellatedSolidPSO;
+    tessellatedWirePSO.m_rasterizerState = wireRS;
 
     // stencilMarkPSO;
     stencilMaskPSO = defaultSolidPSO;

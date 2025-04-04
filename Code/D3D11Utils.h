@@ -156,5 +156,6 @@ class D3D11Utils {
                             ComPtr<ID3D11DeviceContext> &context,
                             ComPtr<ID3D11Texture2D> &textureToWrite,
                             const std::string filename);
+
 };
 } // namespace hlab

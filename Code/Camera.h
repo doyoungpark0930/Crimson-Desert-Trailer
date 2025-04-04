@@ -41,7 +41,7 @@ class Camera {
     // 프로젝션 옵션도 카메라 클래스로 이동
     float m_projFovAngleY = 90.0f;
     float m_nearZ = 0.01f;
-    float m_farZ = 100.0f;
+    float m_farZ = 400.0f;
     float m_aspect = 16.0f / 9.0f;
     bool m_usePerspectiveProjection = true;
 };

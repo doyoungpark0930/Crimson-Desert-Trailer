@@ -31,7 +31,8 @@ extern ComPtr<ID3D11DepthStencilState> drawMaskedDSS; // 스텐실 표시된 곳만
 
 // Shaders
 extern ComPtr<ID3D11VertexShader> basicVS;
-extern ComPtr<ID3D11VertexShader> skyboxVS;
+extern ComPtr<ID3D11VertexShader> tessellatedQuadVS;
+extern ComPtr<ID3D11VertexShader> skyboxVS; 
 extern ComPtr<ID3D11VertexShader> samplingVS;
 extern ComPtr<ID3D11VertexShader> normalVS;
 extern ComPtr<ID3D11VertexShader> depthOnlyVS;
@@ -43,7 +44,10 @@ extern ComPtr<ID3D11PixelShader> bloomUpPS;
 extern ComPtr<ID3D11PixelShader> normalPS;
 extern ComPtr<ID3D11PixelShader> depthOnlyPS;
 extern ComPtr<ID3D11PixelShader> postEffectsPS;
+
 extern ComPtr<ID3D11GeometryShader> normalGS;
+extern ComPtr<ID3D11HullShader> tessellatedQuadHS;
+extern ComPtr<ID3D11DomainShader> tessellatedQuadDS;
 
 // Input Layouts
 extern ComPtr<ID3D11InputLayout> basicIL;
@@ -57,6 +61,8 @@ extern ComPtr<ID3D11BlendState> mirrorBS;
 // Graphics Pipeline States
 extern GraphicsPSO defaultSolidPSO;
 extern GraphicsPSO defaultWirePSO;
+extern GraphicsPSO tessellatedSolidPSO;
+extern GraphicsPSO tessellatedWirePSO;
 extern GraphicsPSO stencilMaskPSO;
 extern GraphicsPSO reflectSolidPSO;
 extern GraphicsPSO reflectWirePSO;

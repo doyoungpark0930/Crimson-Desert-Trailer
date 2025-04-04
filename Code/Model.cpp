@@ -65,14 +65,15 @@ void Model::Initialize(ComPtr<ID3D11Device> &device,
                 newMesh->normalTexture, newMesh->normalSRV);
             m_materialConstsCPU.useNormalMap = true;
         }
-
+         
         if (!meshData.heightTextureFilename.empty()) {
+
             D3D11Utils::CreateTexture(
                 device, context, meshData.heightTextureFilename, false,
                 newMesh->heightTexture, newMesh->heightSRV);
             m_meshConstsCPU.useHeightMap = true;
         }
-
+ 
         if (!meshData.aoTextureFilename.empty()) {
             D3D11Utils::CreateTexture(device, context,
                                       meshData.aoTextureFilename, false,
@@ -143,6 +144,40 @@ void Model::Render(ComPtr<ID3D11DeviceContext> &context) {
         }
     }
 }
+
+void Model::TessellatedRender(ComPtr<ID3D11DeviceContext> &context) {
+    if (m_isVisible) {
+        for (const auto &mesh : m_meshes) {
+            context->VSSetConstantBuffers(
+                0, 1, mesh->vertexConstBuffer.GetAddressOf());
+            context->PSSetConstantBuffers(
+                0, 1, mesh->pixelConstBuffer.GetAddressOf());
+
+            // 물체 렌더링할 때 여러가지 텍스춰 사용 (t0 부터시작) 
+            vector<ID3D11ShaderResourceView *> resViews = {
+                mesh->albedoSRV.Get(), mesh->normalSRV.Get(), mesh->aoSRV.Get(),
+                mesh->metallicRoughnessSRV.Get(), mesh->emissiveSRV.Get()};
+            context->PSSetShaderResources(0, UINT(resViews.size()),
+                                          resViews.data());
+
+            context->HSSetConstantBuffers(
+                0, 1, mesh->vertexConstBuffer.GetAddressOf());
+
+            context->DSSetShaderResources(0, 1, mesh->heightSRV.GetAddressOf());
+            context->DSSetConstantBuffers(
+                0, 1, mesh->vertexConstBuffer.GetAddressOf());
+
+            context->IASetVertexBuffers(0, 1, mesh->vertexBuffer.GetAddressOf(),
+                                        &mesh->stride, &mesh->offset);
+
+            context->IASetIndexBuffer(mesh->indexBuffer.Get(),
+                                      DXGI_FORMAT_R32_UINT, 0);
+            context->DrawIndexed(mesh->indexCount, 0, 0);
+        }
+    }
+
+}
+
 
 void Model::RenderNormals(ComPtr<ID3D11DeviceContext> &context) {
     for (const auto &mesh : m_meshes) {
