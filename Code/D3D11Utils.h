@@ -83,6 +83,31 @@ class D3D11Utils {
                                            vertexBuffer.GetAddressOf()));
     }
 
+    template <typename T_INSTANCE>
+    static void CreateInstanceBuffer(ComPtr<ID3D11Device> &device,
+                                     const vector<T_INSTANCE> &instances,
+                                     ComPtr<ID3D11Buffer> &instanceBuffer) {
+
+        // 기본적으로 VertexBuffer와 비슷합니다.
+
+        D3D11_BUFFER_DESC bufferDesc;
+        ZeroMemory(&bufferDesc, sizeof(bufferDesc));
+        bufferDesc.Usage = D3D11_USAGE_DYNAMIC; // <- 애니메이션에 사용
+        bufferDesc.ByteWidth = UINT(sizeof(T_INSTANCE) * instances.size());
+        bufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+        bufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE; // <- CPU에서 복사
+        bufferDesc.StructureByteStride = sizeof(T_INSTANCE);
+
+        D3D11_SUBRESOURCE_DATA vertexBufferData = {
+            0}; // MS 예제에서 초기화하는 방식
+        vertexBufferData.pSysMem = instances.data();
+        vertexBufferData.SysMemPitch = 0;
+        vertexBufferData.SysMemSlicePitch = 0;
+
+        ThrowIfFailed(device->CreateBuffer(&bufferDesc, &vertexBufferData,
+                                           instanceBuffer.GetAddressOf()));
+    }
+
     template <typename T_CONSTANT>
     static void CreateConstBuffer(ComPtr<ID3D11Device> &device,
                                   const T_CONSTANT &constantBufferData,
@@ -109,10 +134,10 @@ class D3D11Utils {
         ThrowIfFailed(device->CreateBuffer(&desc, &initData,
                                            constantBuffer.GetAddressOf()));
     }
-
+    
+    
     template <typename T_DATA>
-    static void UpdateBuffer(ComPtr<ID3D11Device> &device,
-                             ComPtr<ID3D11DeviceContext> &context,
+    static void UpdateBuffer(ComPtr<ID3D11DeviceContext> &context,
                              const T_DATA &bufferData,
                              ComPtr<ID3D11Buffer> &buffer) {
 

@@ -33,5 +33,7 @@ class ModelLoader {
     std::vector<MeshData> meshes;
     bool m_isGLTF = false; // gltf or fbx
     bool m_revertNormals = false;
+
+    Vector2 texScale;
 };
 } // namespace hlab

@@ -134,6 +134,31 @@ MeshData GeometryGenerator::MakeSquareGridQuad(const int numSlices,
     return meshData;
 }
 
+MeshData GeometryGenerator::MakeGrass() {
+
+    MeshData grid = MakeSquareGrid(1, 4);
+
+    for (auto &v : grid.vertices) {
+
+        // 적당히 가늘게 조절
+        v.position.x *= 0.02f;
+
+        // Y범위를 0~1로 조절
+        v.position.y = v.position.y * 0.5f + 0.5f;
+    }
+
+    // 맨 위를 뾰족하게 만들기 위해 삼각형 하나와 정점 하나 삭제
+    grid.indices.erase(grid.indices.begin(), grid.indices.begin() + 3);
+    for (auto &i : grid.indices) {
+        i -= 1;
+    }
+    grid.vertices.erase(grid.vertices.begin());
+    grid.vertices[0].position.x = 0.0f;
+    grid.vertices[0].texcoord.x = 0.5f;
+
+    return grid;
+}
+
 MeshData GeometryGenerator::MakeBox(const float scale) {
 
     vector<Vector3> positions;
@@ -579,11 +604,14 @@ MeshData GeometryGenerator::SubdivideToSphere(const float radius,
 }
 vector<MeshData> GeometryGenerator::ReadFromFile(std::string basePath,
                                                  std::string filename,
-                                                 bool revertNormals) {
+                                                 bool revertNormals,
+                                                 const Vector2 texScale
+    ) {
 
     using namespace DirectX;
 
     ModelLoader modelLoader;
+    modelLoader.texScale = texScale;
     modelLoader.Load(basePath, filename, revertNormals);
     vector<MeshData> &meshes = modelLoader.meshes;
 

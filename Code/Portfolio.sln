@@ -3,7 +3,7 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
 VisualStudioVersion = 17.5.33424.131
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "13_LightAndShadow_Step6_SoftShadowPCSS", "13_LightAndShadow_Step6_SoftShadowPCSS.vcxproj", "{2A045386-1507-4BA0-96EA-9BE6FE100D3A}"
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "Portfolio", "Portfolio.vcxproj", "{2A045386-1507-4BA0-96EA-9BE6FE100D3A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

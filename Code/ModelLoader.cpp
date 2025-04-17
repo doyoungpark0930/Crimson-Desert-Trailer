@@ -58,7 +58,8 @@ string GetExtension(const string filename) {
     return ext;
 }
 
-void ModelLoader::Load(std::string basePath, std::string filename, bool revertNormals) {
+void ModelLoader::Load(std::string basePath, std::string filename,
+                       bool revertNormals) {
 
     if (GetExtension(filename) == ".gltf") {
         m_isGLTF = true;
@@ -122,7 +123,7 @@ void ModelLoader::UpdateTangents() {
 void ModelLoader::ProcessNode(aiNode *node, const aiScene *scene, Matrix tr) {
 
     // std::cout << node->mName.C_Str() << " : " << node->mNumMeshes << " "
-    //           << node->mNumChildren << std::endl;
+    //          << node->mNumChildren << std::endl;
 
     Matrix m;
     ai_real *temp = &node->mTransformation.a1;
@@ -196,8 +197,10 @@ MeshData ModelLoader::ProcessMesh(aiMesh *mesh, const aiScene *scene) {
         vertex.normalModel.Normalize();
 
         if (mesh->mTextureCoords[0]) {
-            vertex.texcoord.x = (float)mesh->mTextureCoords[0][i].x;
-            vertex.texcoord.y = (float)mesh->mTextureCoords[0][i].y;
+            vertex.texcoord.x =
+                (float)mesh->mTextureCoords[0][i].x * texScale.x;
+            vertex.texcoord.y =
+                (float)mesh->mTextureCoords[0][i].y * texScale.y;
         }
 
         vertices.push_back(vertex);

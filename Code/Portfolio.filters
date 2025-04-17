@@ -102,5 +102,14 @@
     <FxCompile Include="TessellatedQuadHS.hlsl">
       <Filter>Shaders</Filter>
     </FxCompile>
+    <FxCompile Include="TessellatedTriangleDS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="TessellatedTriangleHS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
+    <FxCompile Include="TessellatedTriangleVS.hlsl">
+      <Filter>Shaders</Filter>
+    </FxCompile>
   </ItemGroup>
 </Project>

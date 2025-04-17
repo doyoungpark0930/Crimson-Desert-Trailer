@@ -59,12 +59,12 @@ void Camera::UpdateMouse(float mouseNdcX, float mouseNdcY) {
 
 void Camera::MoveForward(float dt) {
     // 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이;
-    m_position += m_viewDir * m_speed * dt;
+    m_position += m_viewDir * m_speed * dt * 0.5f;
 }
 
 void Camera::MoveUp(float dt) {
     // 이동후의_위치 = 현재_위치 + 이동방향 * 속도 * 시간차이;
-    m_position += m_upDir * m_speed * dt;
+    m_position += m_upDir * m_speed * dt * 0.5f;
 }
 
 void Camera::MoveRight(float dt) { m_position += m_rightDir * m_speed * dt; }

@@ -29,7 +29,7 @@ class Model {
     void UpdateConstantBuffers(ComPtr<ID3D11Device> &device,
                                ComPtr<ID3D11DeviceContext> &context);
 
-    void Render(ComPtr<ID3D11DeviceContext> &context);
+    virtual void Render(ComPtr<ID3D11DeviceContext> &context);
 
     void TessellatedRender(ComPtr<ID3D11DeviceContext> &context);
 
@@ -41,19 +41,20 @@ class Model {
     Matrix m_worldRow = Matrix();   // Model(Object) To World 행렬
     Matrix m_worldITRow = Matrix(); // InverseTranspose
 
-    MeshConstants m_meshConstsCPU;
-    MaterialConstants m_materialConstsCPU;
+    ConstantBuffer<MeshConstants> m_meshConsts;
+    ConstantBuffer<MaterialConstants> m_materialConsts;
 
     bool m_drawNormals = false;
     bool m_isVisible = true;
     bool m_castShadow = true;
 
+    float scale = 1.0f;
+    Vector3 position = Vector3(0.0f, 0.0f, 0.0f);
+    Vector3 rotation = Vector3(0.0f, 0.0f, 0.0f);
+
 
     std::vector<shared_ptr<Mesh>> m_meshes;
 
-  private:
-    ComPtr<ID3D11Buffer> m_meshConstsGPU;
-    ComPtr<ID3D11Buffer> m_materialConstsGPU;
 };
 
 } // namespace hlab

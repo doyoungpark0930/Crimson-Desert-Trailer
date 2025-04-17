@@ -9,6 +9,7 @@
 #include "GeometryGenerator.h"
 #include "ImageFilter.h"
 #include "Model.h"
+#include "GrassModel.h"
 
 namespace hlab {
 
@@ -29,7 +30,8 @@ class ExampleApp : public AppBase {
   protected:
     shared_ptr<Model> m_ground;
     shared_ptr<Model> m_mainObj;
-    shared_ptr<Model> m_testObj;
+    shared_ptr<Model> m_testObj1;
+    shared_ptr<GrassModel> m_grass;
     shared_ptr<Model> m_lightSphere[MAX_LIGHTS];
     shared_ptr<Model> m_skybox;
     shared_ptr<Model> m_mountain;
@@ -40,6 +42,8 @@ class ExampleApp : public AppBase {
 
     bool m_usePerspectiveProjection = true;
 
+    float m_windStrength = 1.0f; //잔디 바람세기
+
     // 거울
     //shared_ptr<Model> m_mirror;
     //DirectX::SimpleMath::Plane m_mirrorPlane;
@@ -47,7 +51,9 @@ class ExampleApp : public AppBase {
 
     // 거울이 아닌 물체들의 리스트 (for문으로 그리기 위함)
     vector<shared_ptr<Model>> m_basicList;
-    vector<shared_ptr<Model>> m_tessellatedList;
+    vector<shared_ptr<Model>> m_tessellatedQuadList;
+    vector<shared_ptr<Model>> m_tessellatedTriangleList;
+    shared_ptr<Model> m_basicGrass;
 };
 
 } // namespace hlab

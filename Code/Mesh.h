@@ -22,8 +22,8 @@ struct Mesh {
     ComPtr<ID3D11Buffer> vertexBuffer;
     ComPtr<ID3D11Buffer> indexBuffer;
 
-    ComPtr<ID3D11Buffer> vertexConstBuffer;
-    ComPtr<ID3D11Buffer> pixelConstBuffer;
+    ComPtr<ID3D11Buffer> meshConstsGPU;
+    ComPtr<ID3D11Buffer> materialConstsGPU;
 
     ComPtr<ID3D11Texture2D> albedoTexture;
     ComPtr<ID3D11Texture2D> emissiveTexture; // 빛을 내는 텍스춰 추가

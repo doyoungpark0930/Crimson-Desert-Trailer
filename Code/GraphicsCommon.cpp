@@ -17,6 +17,8 @@ ComPtr<ID3D11RasterizerState> solidCCWRS;
 ComPtr<ID3D11RasterizerState> wireRS;
 ComPtr<ID3D11RasterizerState> wireCCWRS;
 ComPtr<ID3D11RasterizerState> postProcessingRS;
+ComPtr<ID3D11RasterizerState> solidBothRS; // front and back
+ComPtr<ID3D11RasterizerState> wireBothRS;
 
 // Depth Stencil States
 ComPtr<ID3D11DepthStencilState> drawDSS;       // 일반적으로 그리기
@@ -29,10 +31,12 @@ ComPtr<ID3D11BlendState> mirrorBS;
 // Shaders
 ComPtr<ID3D11VertexShader> basicVS;
 ComPtr<ID3D11VertexShader> tessellatedQuadVS;
+ComPtr<ID3D11VertexShader> tessellatedTriangleVS;
 ComPtr<ID3D11VertexShader> skyboxVS;
 ComPtr<ID3D11VertexShader> samplingVS;
 ComPtr<ID3D11VertexShader> normalVS;
 ComPtr<ID3D11VertexShader> depthOnlyVS;
+ComPtr<ID3D11VertexShader> grassVS;
 
 ComPtr<ID3D11PixelShader> basicPS;
 ComPtr<ID3D11PixelShader> skyboxPS;
@@ -42,24 +46,30 @@ ComPtr<ID3D11PixelShader> bloomUpPS;
 ComPtr<ID3D11PixelShader> normalPS;
 ComPtr<ID3D11PixelShader> depthOnlyPS;
 ComPtr<ID3D11PixelShader> postEffectsPS;
+ComPtr<ID3D11PixelShader> grassPS;
 
 
 ComPtr<ID3D11GeometryShader> normalGS;
 
 ComPtr<ID3D11HullShader> tessellatedQuadHS;
+ComPtr<ID3D11HullShader> tessellatedTriangleHS;
 ComPtr<ID3D11DomainShader> tessellatedQuadDS;
+ComPtr<ID3D11DomainShader> tessellatedTriangleDS;
 
 // Input Layouts
 ComPtr<ID3D11InputLayout> basicIL;
 ComPtr<ID3D11InputLayout> samplingIL;
 ComPtr<ID3D11InputLayout> skyboxIL;
 ComPtr<ID3D11InputLayout> postProcessingIL;
+ComPtr<ID3D11InputLayout> grassIL;
 
 // Graphics Pipeline States
 GraphicsPSO defaultSolidPSO;
 GraphicsPSO defaultWirePSO;
-GraphicsPSO tessellatedSolidPSO;
-GraphicsPSO tessellatedWirePSO;
+GraphicsPSO tessellatedQuadSolidPSO;
+GraphicsPSO tessellatedQuadWirePSO;
+GraphicsPSO tessellatedTriangleSolidPSO;
+GraphicsPSO tessellatedTriangleWirePSO;
 GraphicsPSO stencilMaskPSO;
 GraphicsPSO reflectSolidPSO;
 GraphicsPSO reflectWirePSO;
@@ -73,6 +83,8 @@ GraphicsPSO normalsPSO;
 GraphicsPSO depthOnlyPSO;
 GraphicsPSO postEffectsPSO;
 GraphicsPSO postProcessingPSO;
+GraphicsPSO grassSolidPSO;
+GraphicsPSO grassWirePSO;
 
 } // namespace Graphics
 
@@ -162,6 +174,19 @@ void Graphics::InitRasterizerStates(ComPtr<ID3D11Device> &device) {
     rastDesc.DepthClipEnable = false;
     ThrowIfFailed(device->CreateRasterizerState(
         &rastDesc, postProcessingRS.GetAddressOf()));
+
+    ZeroMemory(&rastDesc, sizeof(D3D11_RASTERIZER_DESC));
+    rastDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_SOLID;
+    rastDesc.CullMode = D3D11_CULL_MODE::D3D11_CULL_NONE; // 양면
+    rastDesc.FrontCounterClockwise = false;
+    rastDesc.DepthClipEnable = true;
+    rastDesc.MultisampleEnable = true;
+    ThrowIfFailed(
+        device->CreateRasterizerState(&rastDesc, solidBothRS.GetAddressOf()));
+
+    rastDesc.FillMode = D3D11_FILL_MODE::D3D11_FILL_WIREFRAME; // 양면, Wire
+    ThrowIfFailed(
+        device->CreateRasterizerState(&rastDesc, wireBothRS.GetAddressOf()));
 }
 
 void Graphics::InitBlendStates(ComPtr<ID3D11Device> &device) {
@@ -295,10 +320,35 @@ void Graphics::InitShaders(ComPtr<ID3D11Device> &device) {
          D3D11_INPUT_PER_VERTEX_DATA, 0},
     };
 
+    vector<D3D11_INPUT_ELEMENT_DESC> grassIEs = {
+        {"POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, // Slot 0, 0부터 시작
+         D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 12,
+         D3D11_INPUT_PER_VERTEX_DATA, 0},
+        {"TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 24,
+         D3D11_INPUT_PER_VERTEX_DATA, 0},
+
+        // 행렬 하나는 4x4라서 Element 4개 사용 (쉐이더에서는 행렬 하나)
+        {"WORLD", 0, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 0, // Slot 1, 0부터 시작
+         D3D11_INPUT_PER_INSTANCE_DATA, 1}, // 마지막 1은 instance step
+        {"WORLD", 1, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 16,
+         D3D11_INPUT_PER_INSTANCE_DATA, 1}, // 마지막 1은 instance step
+        {"WORLD", 2, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 32,
+         D3D11_INPUT_PER_INSTANCE_DATA, 1}, // 마지막 1은 instance step
+        {"WORLD", 3, DXGI_FORMAT_R32G32B32A32_FLOAT, 1, 48,
+         D3D11_INPUT_PER_INSTANCE_DATA, 1}, // 마지막 1은 instance step
+        {"COLOR", 0, DXGI_FORMAT_R32_FLOAT, 1, 64, // windStrength
+         D3D11_INPUT_PER_INSTANCE_DATA, 1}};
+
     D3D11Utils::CreateVertexShaderAndInputLayout(device, L"BasicVS.hlsl",
                                                  basicIEs, basicVS, basicIL);
     D3D11Utils::CreateVertexShaderAndInputLayout(
         device, L"TessellatedQuadVS.hlsl", basicIEs, tessellatedQuadVS, basicIL);
+
+    D3D11Utils::CreateVertexShaderAndInputLayout(
+        device, L"TessellatedTriangleVS.hlsl", basicIEs, tessellatedTriangleVS,
+        basicIL);
+
     D3D11Utils::CreateVertexShaderAndInputLayout(device, L"NormalVS.hlsl",
                                                  basicIEs, normalVS, basicIL);
     D3D11Utils::CreateVertexShaderAndInputLayout(
@@ -307,6 +357,8 @@ void Graphics::InitShaders(ComPtr<ID3D11Device> &device) {
                                                  skyboxIE, skyboxVS, skyboxIL);
     D3D11Utils::CreateVertexShaderAndInputLayout(
         device, L"DepthOnlyVS.hlsl", basicIEs, depthOnlyVS, skyboxIL);
+    D3D11Utils::CreateVertexShaderAndInputLayout(device, L"GrassVS.hlsl",
+                                                 grassIEs, grassVS, grassIL);
 
     D3D11Utils::CreatePixelShader(device, L"BasicPS.hlsl", basicPS);
     D3D11Utils::CreatePixelShader(device, L"NormalPS.hlsl", normalPS);
@@ -316,14 +368,20 @@ void Graphics::InitShaders(ComPtr<ID3D11Device> &device) {
     D3D11Utils::CreatePixelShader(device, L"BloomUpPS.hlsl", bloomUpPS);
     D3D11Utils::CreatePixelShader(device, L"DepthOnlyPS.hlsl", depthOnlyPS);
     D3D11Utils::CreatePixelShader(device, L"PostEffectsPS.hlsl", postEffectsPS);
+    D3D11Utils::CreatePixelShader(device, L"GrassPS.hlsl", grassPS);
 
 
     D3D11Utils::CreateGeometryShader(device, L"NormalGS.hlsl", normalGS);
 
     D3D11Utils::CreateHullShader(device, L"TessellatedQuadHS.hlsl",
                                  tessellatedQuadHS);
+    D3D11Utils::CreateHullShader(device, L"TessellatedTriangleHS.hlsl",
+                                 tessellatedTriangleHS);
+
     D3D11Utils::CreateDomainShader(device, L"TessellatedQuadDS.hlsl",
                                    tessellatedQuadDS);
+    D3D11Utils::CreateDomainShader(device, L"TessellatedTriangleDS.hlsl",
+                                   tessellatedTriangleDS);
 }
 
 void Graphics::InitPipelineStates(ComPtr<ID3D11Device> &device) {
@@ -339,18 +397,31 @@ void Graphics::InitPipelineStates(ComPtr<ID3D11Device> &device) {
     defaultWirePSO = defaultSolidPSO;
     defaultWirePSO.m_rasterizerState = wireRS;
 
-    // tessellatedSolidPSO;
-    tessellatedSolidPSO.m_vertexShader = tessellatedQuadVS;
-    tessellatedSolidPSO.m_hullShader = tessellatedQuadHS;
-    tessellatedSolidPSO.m_domainShader = tessellatedQuadDS;
-    tessellatedSolidPSO.m_inputLayout = basicIL;
-    tessellatedSolidPSO.m_pixelShader = basicPS;
-    tessellatedSolidPSO.m_rasterizerState = solidRS;
-    tessellatedSolidPSO.m_primitiveTopology =
+    // tessellatedQuadSolidPSO;
+    tessellatedQuadSolidPSO.m_vertexShader = tessellatedQuadVS;
+    tessellatedQuadSolidPSO.m_hullShader = tessellatedQuadHS;
+    tessellatedQuadSolidPSO.m_domainShader = tessellatedQuadDS; 
+    tessellatedQuadSolidPSO.m_inputLayout = basicIL;
+    tessellatedQuadSolidPSO.m_pixelShader = basicPS; 
+    tessellatedQuadSolidPSO.m_rasterizerState = solidRS;
+    tessellatedQuadSolidPSO.m_primitiveTopology =
         D3D_PRIMITIVE_TOPOLOGY_4_CONTROL_POINT_PATCHLIST;
 
-    tessellatedWirePSO = tessellatedSolidPSO;
-    tessellatedWirePSO.m_rasterizerState = wireRS;
+    tessellatedQuadWirePSO = tessellatedQuadSolidPSO;
+    tessellatedQuadWirePSO.m_rasterizerState = wireRS;
+
+    // tessellatedTriangleSolidPSO;
+    tessellatedTriangleSolidPSO.m_vertexShader = tessellatedTriangleVS;
+    tessellatedTriangleSolidPSO.m_hullShader = tessellatedTriangleHS;
+    tessellatedTriangleSolidPSO.m_domainShader = tessellatedTriangleDS;
+    tessellatedTriangleSolidPSO.m_inputLayout = basicIL;
+    tessellatedTriangleSolidPSO.m_pixelShader = basicPS;
+    tessellatedTriangleSolidPSO.m_rasterizerState = solidRS;
+    tessellatedTriangleSolidPSO.m_primitiveTopology =
+        D3D_PRIMITIVE_TOPOLOGY_3_CONTROL_POINT_PATCHLIST;
+
+    tessellatedTriangleWirePSO = tessellatedTriangleSolidPSO;
+    tessellatedTriangleWirePSO.m_rasterizerState = wireRS;
 
     // stencilMarkPSO;
     stencilMaskPSO = defaultSolidPSO;
@@ -426,6 +497,18 @@ void Graphics::InitPipelineStates(ComPtr<ID3D11Device> &device) {
     postProcessingPSO.m_pixelShader = depthOnlyPS; // dummy
     postProcessingPSO.m_inputLayout = samplingIL;
     postProcessingPSO.m_rasterizerState = postProcessingRS;
+
+    // grassSolidPSO
+    grassSolidPSO = defaultSolidPSO;
+    grassSolidPSO.m_vertexShader = grassVS;
+    grassSolidPSO.m_pixelShader = grassPS;
+    grassSolidPSO.m_inputLayout = grassIL;
+    grassSolidPSO.m_rasterizerState = solidBothRS; // 양면
+    grassSolidPSO.m_primitiveTopology = D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST;
+
+    // grassWirePSO
+    grassWirePSO = grassSolidPSO;
+    grassWirePSO.m_rasterizerState = wireBothRS; // 양면
 }
 
 } // namespace hlab

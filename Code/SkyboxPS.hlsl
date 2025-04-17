@@ -3,7 +3,7 @@
 struct SkyboxPixelShaderInput
 {
     float4 posProj : SV_POSITION;
-    float3 posModel : POSITION;
+    float3 posModel : POSITION; 
 };
 
 struct PixelShaderOutput

@@ -21,7 +21,7 @@ struct NormalPixelShaderInput
     float3 color : COLOR;
 };
 
-static const float lineScale = 0.02;
+static const float lineScale = 1.0;
 
 [maxvertexcount(2)]
 void main(point NormalGeometryShaderInput input[1], inout LineStream<NormalPixelShaderInput> outputStream)

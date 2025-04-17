@@ -16,7 +16,11 @@ cbuffer MaterialConstants : register(b0)
 {
     float3 albedoFactor; // baseColor
     float roughnessFactor;
+    
     float metallicFactor;
+    float aoFactor;
+    float2 padding0;
+    
     float3 emissionFactor;
 
     int useAlbedoMap;
@@ -26,14 +30,50 @@ cbuffer MaterialConstants : register(b0)
     int useMetallicMap;
     int useRoughnessMap;
     int useEmissiveMap;
-    float dummy;
+    float padding1;
 };
 
 float3 SchlickFresnel(float3 F0, float NdotH)
 {
-    return F0 + (1.0 - F0) * pow(2.0, (-5.55473 * NdotH - 6.98316) * NdotH);
-    //return F0 + (1.0 - F0) * pow(1.0 - cosTheta, 5.0);
+    return F0 + (1.0 - F0) * pow(2.0, (-5.55473 * NdotH - 6.98316) * NdotH); //계산을 좀더 빠르게 하기 위함. 차이는 별로 없음
+    //return F0 + (1.0 - F0) * pow(1.0 - NdotH, 5.0);
 }
+
+//roughness를 고려한 Fresnel공식
+float3 fresnelSchlickRoughness(float3 F0, float cosTheta, float roughness)
+{
+    return F0 + (max(float3(1.0 - roughness, 1.0 - roughness, 1.0 - roughness), F0) - F0) * pow(clamp(1.0 - cosTheta, 0.0, 1.0), 5.0);
+}
+/*
+float OrenNayarDiffuse( //굳이 사용하지 않음
+    float3 ld, // Light direction
+    float3 vd, // View direction
+    float3 sn, // Surface normal
+    float r, // Roughness
+    float3 a)       // Albedo (Diffuse color)
+{
+    // NdotL, NdotV 계산
+    float LdotV = dot(ld, vd);
+    float NdotL = dot(sn, ld);
+    float NdotV = dot(sn, vd);
+
+    // geometry term
+    float s = LdotV - NdotL * NdotV;
+    float t = lerp(1.0, max(NdotL, NdotV), step(0.0, s));
+
+    // Roughness squared
+    float sigma2 = r * r;
+
+    // A, B coefficients
+    float A = 1.0 - 0.5 * (sigma2 / (sigma2 + 0.33 + 1e-6));
+    float B = 0.45 * sigma2 / (sigma2 + 0.09 + 1e-6);
+
+    // Geometry factor
+    float ga = dot(vd - sn * NdotV, sn - sn * NdotL);
+
+    // Final diffuse reflection
+    return (A + B * max(0.0, ga) * sqrt((1.0 - NdotV * NdotV) * (1.0 - NdotL * NdotL)) / max(NdotL, NdotV));
+}*/
 
 struct PixelShaderOutput
 {
@@ -46,8 +86,8 @@ float3 GetNormal(PixelShaderInput input)
     //내가 만든 것
     float dist = length(eyeWorld - input.posWorld);
     float distMin = 0.5;
-    float distMax = 70.0;
-    float testLod = 10- 10 * saturate((distMax - dist) / (distMax - distMin));
+    float distMax = 80.0;
+    float testLod = 10 - 10 * saturate((distMax - dist) / (distMax - distMin));
     
     if (useNormalMap) // NormalWorld를 교체
     {
@@ -70,32 +110,34 @@ float3 GetNormal(PixelShaderInput input)
 }
 
 float3 DiffuseIBL(float3 albedo, float3 normalWorld, float3 pixelToEye,
-                  float metallic)
+                  float metallic, float roughness)//kd
 {
     float3 F0 = lerp(Fdielectric, albedo, metallic);
-    float3 F = SchlickFresnel(F0, max(0.0, dot(normalWorld, pixelToEye)));
-    float3 kd = lerp(1.0 - F, 0.0, metallic);
+    float3 F = fresnelSchlickRoughness(F0, max(0.0, dot(normalWorld, pixelToEye)), roughness);
+    float3 kd = lerp(1.0 - F, 0.0, metallic); //즉 반사를 뺀 나머지 에너지가 디퓨즈로 간다는 뜻, 1- ks
     float3 irradiance = irradianceIBLTex.SampleLevel(linearWrapSampler, normalWorld, 0).rgb;
     
     return kd * albedo * irradiance;
 }
 
 float3 SpecularIBL(float3 albedo, float3 normalWorld, float3 pixelToEye,
-                   float metallic, float roughness)
+                   float metallic, float roughness)//ks
 {
-    float2 specularBRDF = brdfTex.SampleLevel(linearClampSampler, float2(dot(normalWorld, pixelToEye), 1.0 - roughness), 0.0f).rg;
+    float2 specularBRDF = brdfTex.SampleLevel(linearClampSampler, float2(max(0.0, dot(normalWorld, pixelToEye)), roughness), 0.0f).rg;
     float3 specularIrradiance = specularIBLTex.SampleLevel(linearWrapSampler, reflect(-pixelToEye, normalWorld),
-                                                            2 + roughness * 5.0f).rgb;
+                                                             2 + roughness * 5.0f).rgb; //원래 2 + roughenss*5.0f
     const float3 Fdielectric = 0.04; // 비금속(Dielectric) 재질의 F0
     float3 F0 = lerp(Fdielectric, albedo, metallic);
+    float3 F = fresnelSchlickRoughness(F0, max(0.0, dot(normalWorld, pixelToEye)), roughness);
 
-    return (F0 * specularBRDF.x + specularBRDF.y) * specularIrradiance;
+    return (F * specularBRDF.x + specularBRDF.y) * specularIrradiance; //(F0 * specularBRDF.x + specularBRDF.y) 이 계산애 ks포함. 따라서 ks 안곱함
+    //F*D*G를 다 계산하면 느리기 때문에 BRDF에서 가져오는 것
 }
 
 float3 AmbientLightingByIBL(float3 albedo, float3 normalW, float3 pixelToEye, float ao,
                             float metallic, float roughness)
 {
-    float3 diffuseIBL = DiffuseIBL(albedo, normalW, pixelToEye, metallic);
+    float3 diffuseIBL = DiffuseIBL(albedo, normalW, pixelToEye, metallic, roughness);
     float3 specularIBL = SpecularIBL(albedo, normalW, pixelToEye, metallic, roughness);
     
     return (diffuseIBL + specularIBL) * ao;
@@ -206,7 +248,7 @@ float PCSS(float2 uv, float zReceiverNdc, Texture2D shadowMap, matrix invProj, f
     else
     {
         // STEP 2: penumbra size
-        float penumbraRatio = (zReceiverView - avgBlockerDepthView) / avgBlockerDepthView;    
+        float penumbraRatio = (zReceiverView - avgBlockerDepthView) / avgBlockerDepthView;
         float filterRadiusUV = penumbraRatio * lightRadiusWorld * NEAR_PLANE / zReceiverView;
         filterRadiusUV /= LIGHT_FRUSTUM_WIDTH;
 
@@ -260,10 +302,11 @@ float3 LightRadiance(Light light, float3 posWorld, float3 normalWorld, Texture2D
         uint width, height, numMips;
         shadowMap.GetDimensions(0, width, height, numMips);
         
+        
         // Texel size
         float dx = 5.0 / (float) width;
         //shadowFactor = PCF_Filter(lightTexcoord.xy, lightScreen.z - 0.001, dx, shadowMap);
-        shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.01, shadowMap, light.invProj, light.radius);
+        shadowFactor = PCSS(lightTexcoord, lightScreen.z - 0.0002, shadowMap, light.invProj, light.radius);
     }
 
     float3 radiance = light.radiance * spotFator * att * shadowFactor;
@@ -299,18 +342,18 @@ float3 LightRadiance(in Light light, in float3 posWorld, in float3 normalWorld)
 
 PixelShaderOutput main(PixelShaderInput input)
 {
-    float3 pixelToEye = normalize(eyeWorld - input.posWorld);
+    float3 pixelToEye = normalize(eyeWorld - input.posWorld); //V
     float3 normalWorld = GetNormal(input);
     
     //내가 만든 것
     float dist = length(eyeWorld - input.posWorld);
     float distMin = 0.5;
-    float distMax = 70.0;
+    float distMax = 80.0;
     float testLod = 10 - 10 * saturate((distMax - dist) / (distMax - distMin));
     
     float3 albedo = useAlbedoMap ? albedoTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).rgb * albedoFactor
                                  : albedoFactor;
-    float ao = useAOMap ? aoTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).rgb : 1.0;
+    float ao = useAOMap ? aoTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).rgb * aoFactor : aoFactor;
     float metallic = useMetallicMap ? metallicRoughnessTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).b * metallicFactor
                                     : metallicFactor;
     float roughness = useRoughnessMap ? metallicRoughnessTex.SampleLevel(linearWrapSampler, input.texcoord, testLod).g * roughnessFactor
@@ -324,11 +367,13 @@ PixelShaderOutput main(PixelShaderInput input)
 
     // 임시로 unroll 사용
     [unroll] // warning X3550: sampler array index must be a literal expression, forcing loop to unroll
-    for (int i = 0; i < MAX_LIGHTS; ++i)
+    for (int i = 0; i < MAX_LIGHTS; ++i) //적분대신 모든 광원에 대하여 한번 씩 돌음
     {
         if (lights[i].type)
         {
-            float3 lightVec = lights[i].position - input.posWorld;
+            float3 lightVec = lights[i].position - input.posWorld; //wi = L
+           
+            
             float lightDist = length(lightVec);
             lightVec /= lightDist;
             float3 halfway = normalize(pixelToEye + lightVec);
@@ -341,11 +386,12 @@ PixelShaderOutput main(PixelShaderInput input)
             float3 F0 = lerp(Fdielectric, albedo, metallic);
             float3 F = SchlickFresnel(F0, max(0.0, dot(halfway, pixelToEye)));
             float3 kd = lerp(float3(1, 1, 1) - F, float3(0, 0, 0), metallic);
-            float3 diffuseBRDF = kd * albedo;
+            float3 diffuseBRDF = kd * albedo / 3.1415;
 
             float D = NdfGGX(NdotH, roughness);
             float3 G = SchlickGGX(NdotI, NdotO, roughness);
-            float3 specularBRDF = (F * D * G) / max(1e-5, 4.0 * NdotI * NdotO);
+            float3 specularBRDF = (F * D * G) / max(1e-5, 4.0 * NdotI * NdotO); //cook torrance
+            //1e-5는 나눗셈 오차를 피하기 위함
 
             float3 radiance = 0.0f;
             
@@ -358,7 +404,7 @@ PixelShaderOutput main(PixelShaderInput input)
             if (i == 2)
                 radiance = LightRadiance(lights[i], input.posWorld, normalWorld, shadowMap2);*/
                 
-            directLighting += (diffuseBRDF + specularBRDF) * radiance * NdotI;
+            directLighting += (diffuseBRDF + specularBRDF) * radiance * NdotI; //NdotI는 cos theta 즉, N과 빛과의 각도
         }
     }
     

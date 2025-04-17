@@ -25,9 +25,8 @@ class Camera {
 
   public:
     bool m_useFirstPersonView = false;
-
   private:
-    Vector3 m_position = Vector3(-1.3469f, 0.461257f, -0.408304f);
+    Vector3 m_position = Vector3(16.5549f, 0.026216f, -8.21887f);
     Vector3 m_viewDir = Vector3(0.0f, 0.0f, 1.0f);
     Vector3 m_upDir = Vector3(0.0f, 1.0f, 0.0f); // 이번 예제에서는 고정
     Vector3 m_rightDir = Vector3(1.0f, 0.0f, 0.0f);
@@ -41,7 +40,7 @@ class Camera {
     // 프로젝션 옵션도 카메라 클래스로 이동
     float m_projFovAngleY = 90.0f;
     float m_nearZ = 0.01f;
-    float m_farZ = 400.0f;
+    float m_farZ = 500.0f;
     float m_aspect = 16.0f / 9.0f;
     bool m_usePerspectiveProjection = true;
 };

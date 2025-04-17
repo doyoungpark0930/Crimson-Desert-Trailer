@@ -32,7 +32,7 @@ AppBase::AppBase()
       m_screenViewport(D3D11_VIEWPORT()) {
 
     g_appBase = this;
-     
+
     m_camera.SetAspectRatio(this->GetAspectRatio());
 }
 
@@ -231,11 +231,12 @@ void AppBase::InitCubemaps(wstring basePath, wstring envFilename,
 }
 
 // 여러 물체들이 공통적으료 사용하는 Const 업데이트
-void AppBase::UpdateGlobalConstants(const Vector3 &eyeWorld,
+void AppBase::UpdateGlobalConstants(const float &dt, const Vector3 &eyeWorld,
+                                    const float &windStrength,
                                     const Matrix &viewRow,
                                     const Matrix &projRow,
                                     const Matrix &refl = Matrix()) {
-
+    m_globalConstsCPU.globalTime += dt;
     m_globalConstsCPU.eyeWorld = eyeWorld;
     m_globalConstsCPU.view = viewRow.Transpose();
     m_globalConstsCPU.proj = projRow.Transpose();
@@ -243,6 +244,7 @@ void AppBase::UpdateGlobalConstants(const Vector3 &eyeWorld,
     m_globalConstsCPU.viewProj = (viewRow * projRow).Transpose();
     // 그림자 렌더링에 사용
     m_globalConstsCPU.invViewProj = m_globalConstsCPU.viewProj.Invert();
+    m_globalConstsCPU.windStrength = windStrength;
 
     m_reflectGlobalConstsCPU = m_globalConstsCPU;
     memcpy(&m_reflectGlobalConstsCPU, &m_globalConstsCPU,
@@ -253,9 +255,8 @@ void AppBase::UpdateGlobalConstants(const Vector3 &eyeWorld,
     m_reflectGlobalConstsCPU.invViewProj =
         m_reflectGlobalConstsCPU.viewProj.Invert();
 
-    D3D11Utils::UpdateBuffer(m_device, m_context, m_globalConstsCPU,
-                             m_globalConstsGPU);
-    D3D11Utils::UpdateBuffer(m_device, m_context, m_reflectGlobalConstsCPU,
+    D3D11Utils::UpdateBuffer(m_context, m_globalConstsCPU, m_globalConstsGPU);
+    D3D11Utils::UpdateBuffer(m_context, m_reflectGlobalConstsCPU,
                              m_reflectGlobalConstsGPU);
 }
 

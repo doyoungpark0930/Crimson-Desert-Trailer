@@ -1,5 +1,6 @@
 #pragma once
 
+#include "D3D11Utils.h"
 #include <directxtk/SimpleMath.h>
 
 // "Common.hlsli"와 동일해야 함
@@ -33,7 +34,11 @@ __declspec(align(256)) struct MaterialConstants {
 
     Vector3 albedoFactor = Vector3(1.0f);
     float roughnessFactor = 1.0f;
+
     float metallicFactor = 1.0f;
+    float aoFactor = 1.0f;
+    Vector2 dummy0 = Vector2(0.0f);
+
     Vector3 emissionFactor = Vector3(0.0f);
 
     // 여러 옵션들에 uint 플래그 하나만 사용할 수도 있습니다.
@@ -44,7 +49,7 @@ __declspec(align(256)) struct MaterialConstants {
     int useMetallicMap = 0;
     int useRoughnessMap = 0;
     int useEmissiveMap = 0;
-    float dummy = 0.0f;
+    float dummy1 = 0.0f;
 
     // 참고 flags 구현
     /* union {
@@ -73,7 +78,7 @@ struct Light {
     Vector3 radiance = Vector3(5.0f); // strength
     float fallOffStart = 0.0f;
     Vector3 direction = Vector3(0.0f, 0.0f, 1.0f);
-    float fallOffEnd = 100.0f;
+    float fallOffEnd = 400.0f;
     Vector3 position = Vector3(0.0f, 5.0f, -2.0f);
     float spotPower = 6.0f;
 
@@ -96,12 +101,15 @@ __declspec(align(256)) struct GlobalConstants {
     Matrix invViewProj; // Proj -> World
 
     Vector3 eyeWorld;
-    float strengthIBL = 0.05f;
+    float strengthIBL = 0.138f;
 
+    float windStrength = 1.0f;
     int textureToDraw = 0; // 0: Env, 1: Specular, 2: Irradiance, 그외: 검은색
     float envLodBias = 0.0f; // 환경맵 LodBias
     float lodBias = 2.0f;    // 다른 물체들 LodBias
-    float dummy2 = 0.0f;
+
+    float globalTime = 0.0f;
+    Vector3 dummy;
 
     Light lights[MAX_LIGHTS];
 };
@@ -111,6 +119,25 @@ __declspec(align(256)) struct PostEffectsConstants {
     int mode = 1; // 1: Rendered image, 2: DepthOnly
     float depthScale = 1.0f;
     float fogStrength = 0.0f;
+};
+
+template <typename T_CONSTS> class ConstantBuffer {
+  public:
+    void Initialize(ComPtr<ID3D11Device> &device) {
+        D3D11Utils::CreateConstBuffer(device, m_cpu, m_gpu);
+    }
+
+    void Upload(ComPtr<ID3D11DeviceContext> &context) {
+        D3D11Utils::UpdateBuffer(context, m_cpu, m_gpu);
+    }
+
+  public:
+    T_CONSTS &GetCpu() { return m_cpu; }
+    const auto Get() { return m_gpu.Get(); }
+    const auto GetAddressOf() { return m_gpu.GetAddressOf(); }
+
+    T_CONSTS m_cpu;
+    ComPtr<ID3D11Buffer> m_gpu;
 };
 
 } // namespace hlab

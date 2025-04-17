@@ -41,8 +41,10 @@ class AppBase {
     void InitCubemaps(wstring basePath, wstring envFilename,
                       wstring specularFilename, wstring irradianceFilename,
                       wstring brdfFilename);
-    void UpdateGlobalConstants(const Vector3 &eyeWorld, const Matrix &viewRow,
-                               const Matrix &projRow, const Matrix &refl);
+    void UpdateGlobalConstants(const float &dt, const Vector3 &eyeWorld,
+                               const float &windStrength,
+                               const Matrix &viewRow, const Matrix &projRow,
+                               const Matrix &refl);
     void SetGlobalConsts(ComPtr<ID3D11Buffer> &globalConstsGPU);
 
     void CreateDepthBuffers();

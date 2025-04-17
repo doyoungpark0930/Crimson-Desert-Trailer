@@ -56,11 +56,14 @@ cbuffer GlobalConstants : register(b1)
     matrix invViewProj; // Proj -> World
     float3 eyeWorld;
     float strengthIBL;
-
+    
+    float windStrength = 1.0f;
     int textureToDraw = 0; // 0: Env, 1: Specular, 2: Irradiance, 그외: 검은색
     float envLodBias = 0.0f; // 환경맵 LodBias
     float lodBias = 2.0f; // 다른 물체들 LodBias
-    float dummy2;
+    
+    float globalTime;
+    float3 dummyG;
     
     Light lights[MAX_LIGHTS];
 };

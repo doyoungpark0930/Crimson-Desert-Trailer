@@ -23,6 +23,8 @@ extern ComPtr<ID3D11RasterizerState> solidCCWRS; // Counter-ClockWise
 extern ComPtr<ID3D11RasterizerState> wireRS;
 extern ComPtr<ID3D11RasterizerState> wireCCWRS;
 extern ComPtr<ID3D11RasterizerState> postProcessingRS;
+extern ComPtr<ID3D11RasterizerState> solidBothRS; // front and back
+extern ComPtr<ID3D11RasterizerState> wireBothRS;
 
 // Depth Stencil States
 extern ComPtr<ID3D11DepthStencilState> drawDSS; // 일반적으로 그리기
@@ -32,10 +34,13 @@ extern ComPtr<ID3D11DepthStencilState> drawMaskedDSS; // 스텐실 표시된 곳만
 // Shaders
 extern ComPtr<ID3D11VertexShader> basicVS;
 extern ComPtr<ID3D11VertexShader> tessellatedQuadVS;
+extern ComPtr<ID3D11VertexShader> tessellatedTriangleVS;
 extern ComPtr<ID3D11VertexShader> skyboxVS; 
 extern ComPtr<ID3D11VertexShader> samplingVS;
 extern ComPtr<ID3D11VertexShader> normalVS;
 extern ComPtr<ID3D11VertexShader> depthOnlyVS;
+extern ComPtr<ID3D11VertexShader> grassVS;
+
 extern ComPtr<ID3D11PixelShader> basicPS;
 extern ComPtr<ID3D11PixelShader> skyboxPS;
 extern ComPtr<ID3D11PixelShader> combinePS;
@@ -44,16 +49,20 @@ extern ComPtr<ID3D11PixelShader> bloomUpPS;
 extern ComPtr<ID3D11PixelShader> normalPS;
 extern ComPtr<ID3D11PixelShader> depthOnlyPS;
 extern ComPtr<ID3D11PixelShader> postEffectsPS;
+extern ComPtr<ID3D11PixelShader> grassPS;
 
 extern ComPtr<ID3D11GeometryShader> normalGS;
 extern ComPtr<ID3D11HullShader> tessellatedQuadHS;
+extern ComPtr<ID3D11HullShader> tessellatedTriangleHS;
 extern ComPtr<ID3D11DomainShader> tessellatedQuadDS;
+extern ComPtr<ID3D11DomainShader> tessellatedTriangleDS;
 
 // Input Layouts
 extern ComPtr<ID3D11InputLayout> basicIL;
 extern ComPtr<ID3D11InputLayout> samplingIL;
 extern ComPtr<ID3D11InputLayout> skyboxIL;
 extern ComPtr<ID3D11InputLayout> postProcessingIL;
+extern ComPtr<ID3D11InputLayout> grassIL;
 
 // Blend States
 extern ComPtr<ID3D11BlendState> mirrorBS;
@@ -61,8 +70,10 @@ extern ComPtr<ID3D11BlendState> mirrorBS;
 // Graphics Pipeline States
 extern GraphicsPSO defaultSolidPSO;
 extern GraphicsPSO defaultWirePSO;
-extern GraphicsPSO tessellatedSolidPSO;
-extern GraphicsPSO tessellatedWirePSO;
+extern GraphicsPSO tessellatedQuadSolidPSO;
+extern GraphicsPSO tessellatedQuadWirePSO;
+extern GraphicsPSO tessellatedTriangleSolidPSO;
+extern GraphicsPSO tessellatedTriangleWirePSO;
 extern GraphicsPSO stencilMaskPSO;
 extern GraphicsPSO reflectSolidPSO;
 extern GraphicsPSO reflectWirePSO;
@@ -76,6 +87,8 @@ extern GraphicsPSO normalsPSO;
 extern GraphicsPSO depthOnlyPSO;
 extern GraphicsPSO postEffectsPSO;
 extern GraphicsPSO postProcessingPSO;
+extern GraphicsPSO grassSolidPSO;
+extern GraphicsPSO grassWirePSO;
 
 void InitCommonStates(ComPtr<ID3D11Device> &device);
 

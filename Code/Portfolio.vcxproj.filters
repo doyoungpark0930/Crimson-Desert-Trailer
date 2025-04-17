@@ -1,0 +1,127 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <FxCompile Include="BasicPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="BasicVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="CombinePS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="BloomUpPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="BloomDownPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="DepthOnlyPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="DepthOnlyVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="NormalGS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="NormalPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="NormalVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="PostEffectsPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="SamplingPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="SamplingVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="SkyboxPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="SkyboxVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="TessellatedQuadDS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="TessellatedQuadHS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="TessellatedQuadVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="TessellatedTriangleDS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="TessellatedTriangleHS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="TessellatedTriangleVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="GrassVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="GrassPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D3D11Utils.cpp" />
+    <ClCompile Include="ExampleApp.cpp" />
+    <ClCompile Include="GeometryGenerator.cpp" />
+    <ClCompile Include="GraphicsCommon.cpp" />
+    <ClCompile Include="GraphicsPSO.cpp" />
+    <ClCompile Include="ImageFilter.cpp" />
+    <ClCompile Include="main.cpp" />
+    <ClCompile Include="AppBase.cpp" />
+    <ClCompile Include="ModelLoader.cpp" />
+    <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="PostProcess.cpp" />
+    <ClCompile Include="Model.cpp">
+      <Filter>Models</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ConstantBuffers.h" />
+    <ClInclude Include="Camera.h" />
+    <ClInclude Include="D3D11Utils.h" />
+    <ClInclude Include="AppBase.h" />
+    <ClInclude Include="ExampleApp.h" />
+    <ClInclude Include="GeometryGenerator.h" />
+    <ClInclude Include="GraphicsCommon.h" />
+    <ClInclude Include="GraphicsPSO.h" />
+    <ClInclude Include="ImageFilter.h" />
+    <ClInclude Include="Mesh.h" />
+    <ClInclude Include="MeshData.h" />
+    <ClInclude Include="ModelInstance.h" />
+    <ClInclude Include="ModelLoader.h" />
+    <ClInclude Include="PostProcess.h" />
+    <ClInclude Include="Vertex.h" />
+    <ClInclude Include="Model.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+    <ClInclude Include="GrassModel.h">
+      <Filter>Models</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include=".clang-format" />
+    <None Include="Common.hlsli">
+      <Filter>Shader</Filter>
+    </None>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Shader">
+      <UniqueIdentifier>{20d4f0db-0753-4954-9b21-ea67e8dc8b47}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Models">
+      <UniqueIdentifier>{63f1a397-0cba-4180-bdb3-4f283700f2ac}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
