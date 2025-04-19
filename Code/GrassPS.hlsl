@@ -34,27 +34,19 @@ struct GrassPixelInput
 
 float4 main(GrassPixelInput input) : SV_TARGET
 {
-    float3 lightDir = normalize(lights[0].position - input.posWorld);
+    float3 lightDir = lights[0].position - input.posWorld;
+    float lightDist = length(lightDir);
+    lightDir /= lightDist;
     
-   
+    // Distance attenuation
+    float att = saturate((lights[0].fallOffEnd - lightDist)
+                         / (lights[0].fallOffEnd - lights[0].fallOffStart));
     
-    // 간단한 directional light, 양면이라서 abs 사용
-    float3 color = input.baseColor * abs(dot(input.normalWorld, lightDir)) * 2;
-    return float4(color, 1);
-}
-
-/*
-float4 main(GrassPixelInput input) : SV_TARGET
-{
-    float3 pixelToEye = normalize(eyeWorld - input.posWorld);
-    
-    float3 normalWorld = dot(pixelToEye, input.normalWorld) > 0 ? input.normalWorld : -input.normalWorld; // 양면
-    
-    //float3 lightDir = normalize(float3(0.2, 1.0, 0.0));
-    float3 irradiance = irradianceIBLTex.SampleLevel(linearWrapSampler, normalWorld, 0).rgb;
+    float spotFator = lights[0].type & LIGHT_SPOT
+                     ? pow(max(-dot(lightDir, lights[0].direction), 0.0f), lights[0].spotPower*5.0)
+                      : 1.0f;
     
     // 간단한 directional light, 양면이라서 abs 사용
-    float3 color = input.baseColor * irradiance * dot(pixelToEye, normalWorld) * strengthIBL;
+    float3 color = input.baseColor * abs(dot(input.normalWorld, lightDir)) *att * lights[0].radiance*spotFator;
     return float4(color, 1);
 }
-*/

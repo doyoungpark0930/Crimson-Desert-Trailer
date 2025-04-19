@@ -39,6 +39,7 @@ extern ComPtr<ID3D11VertexShader> skyboxVS;
 extern ComPtr<ID3D11VertexShader> samplingVS;
 extern ComPtr<ID3D11VertexShader> normalVS;
 extern ComPtr<ID3D11VertexShader> depthOnlyVS;
+extern ComPtr<ID3D11VertexShader> depthOnlyGrassVS;
 extern ComPtr<ID3D11VertexShader> grassVS;
 
 extern ComPtr<ID3D11PixelShader> basicPS;
@@ -48,6 +49,7 @@ extern ComPtr<ID3D11PixelShader> bloomDownPS;
 extern ComPtr<ID3D11PixelShader> bloomUpPS;
 extern ComPtr<ID3D11PixelShader> normalPS;
 extern ComPtr<ID3D11PixelShader> depthOnlyPS;
+extern ComPtr<ID3D11PixelShader> depthOnlyGrassPS;
 extern ComPtr<ID3D11PixelShader> postEffectsPS;
 extern ComPtr<ID3D11PixelShader> grassPS;
 
@@ -85,6 +87,7 @@ extern GraphicsPSO reflectSkyboxSolidPSO;
 extern GraphicsPSO reflectSkyboxWirePSO;
 extern GraphicsPSO normalsPSO;
 extern GraphicsPSO depthOnlyPSO;
+extern GraphicsPSO depthOnlyGrassPSO;
 extern GraphicsPSO postEffectsPSO;
 extern GraphicsPSO postProcessingPSO;
 extern GraphicsPSO grassSolidPSO;

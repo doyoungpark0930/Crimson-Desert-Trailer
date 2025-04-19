@@ -2,6 +2,7 @@
 
 #include "GeometryGenerator.h"
 #include "Model.h"
+#include "PerlinNoise.hpp"
 #include <random>
 
 namespace hlab {
@@ -21,40 +22,55 @@ class GrassModel : public Model {
     void Initialize(ComPtr<ID3D11Device> &device,
                     ComPtr<ID3D11DeviceContext> &context) {
 
-
-         // Instances 만들기
+        // 랜덤함수 설정
         std::mt19937 gen(0);
         std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
+        // perlinNoise랜덤함수 설정
+        const siv::PerlinNoise::seed_type seed = 123456u;
+
+        const siv::PerlinNoise perlin{seed};
+
         vector<GrassInstance> &grassInstances = m_instancesCpu;
 
-        for (int i = 0; i < 5000; i++) {
-            const float lengthScale = dist(gen) * 0.1f + 0.15f;
-            const float widthScale = 0.05f + dist(gen) * 0.1f;
-            const Vector3 pos = Vector3(dist(gen) * 1.0f - 1.0f, 0.0f,
-                                        dist(gen) * 1.5f - 1.5f) *
-                                5.0f;
-            const float angle = dist(gen) * 3.141592f; // 바라보는 방향
-            const float slope =
-                (dist(gen) - 0.5f) * 2.0f * 3.141592f * 0.1f; // 기본 기울기
+        for (int i = 0; i < xfreq; i++) {
+            for (int j = 0; j < yfreq; j++) {
+                const float lengthScale = (dist(gen) * 0.3 + 0.2f) * g_scale;
+                const float widthScale = (0.15f + dist(gen) * 0.2f) * g_scale;
 
-            GrassInstance gi;
-            gi.instanceWorld =
-                Matrix::CreateScale(widthScale, lengthScale, 1.0f)*
-                Matrix::CreateRotationX(slope) *
-                Matrix::CreateRotationY(angle) *
-                Matrix::CreateTranslation(pos);
+                float x = i * dx;
+                float z = j * dy;
 
-            grassInstances.push_back(gi);
+                float noise = perlin.octave2D_01(x, z, 2); // 2D 노이즈 적용
+                if (noise < threshold)
+                    continue; // 특정 threshold보다 낮은 경우 skip
+
+                const Vector3 pos =
+                    Vector3(x - 2.5f, 0.0f, z - 2.5f) *
+                    Vector3(square_xLength, 0.0f, square_zLength);
+
+                const float angle = dist(gen) * 3.141592f; // 바라보는 방향
+                const float slope =
+                    (dist(gen) - 0.5f) * 2.0f * 3.141592f * 0.1f; // 기본 기울기
+
+                GrassInstance gi;
+                gi.instanceWorld =
+                    Matrix::CreateScale(widthScale, lengthScale, 1.0f) *
+                    Matrix::CreateRotationX(slope) *
+                    Matrix::CreateRotationY(angle) *
+                    Matrix::CreateTranslation(pos);
+
+                grassInstances.push_back(gi);
+            }
         }
+
         // 쉐이더로 보내기 위해 transpose
         for (auto &i : grassInstances) {
             i.instanceWorld = i.instanceWorld.Transpose();
         }
 
-
-        // 잔디는 그림자맵 만들때 제외 (자체 그림자 효과 구현)
-        m_castShadow = false; 
+        // 잔디는 그림자 효과 없음
+        m_castShadow = false;
 
         auto meshData = GeometryGenerator::MakeGrass();
 
@@ -82,13 +98,14 @@ class GrassModel : public Model {
         m_meshConsts.GetCpu().world = Matrix();
         m_meshConsts.Initialize(device);
         m_materialConsts.Initialize(device);
-       
     };
-    
+
     void Render(ComPtr<ID3D11DeviceContext> &context) override {
         if (m_isVisible) {
-            context->VSSetConstantBuffers(0, 1, Model::m_meshConsts.GetAddressOf());
-            context->PSSetConstantBuffers(0, 1, Model::m_materialConsts.GetAddressOf());
+            context->VSSetConstantBuffers(0, 1,
+                                          Model::m_meshConsts.GetAddressOf());
+            context->PSSetConstantBuffers(
+                0, 1, Model::m_materialConsts.GetAddressOf());
 
             ID3D11Buffer *const vertexBuffers[2] = {m_verticesGpu.Get(),
                                                     m_instancesGpu.Get()};
@@ -103,8 +120,6 @@ class GrassModel : public Model {
         }
     };
 
-  
-
   public:
     vector<GrassInstance> m_instancesCpu;
 
@@ -112,11 +127,19 @@ class GrassModel : public Model {
     ComPtr<ID3D11Buffer> m_instancesGpu;
     ComPtr<ID3D11Buffer> m_indexBuffer;
 
-
     UINT m_indexCount = 0;
     UINT m_vertexCount = 0;
     UINT m_offset = 0;
     UINT m_instanceCount = 0;
+
+    float g_scale = 1.0f;
+    float square_xLength = 1.0f;
+    float square_zLength = 1.0f;
+    int xfreq = 40;
+    int yfreq = 40;
+    float dx = 0.05f;
+    float dy = 0.05f;
+    float threshold = 0.5f;
 };
 
 } // namespace hlab

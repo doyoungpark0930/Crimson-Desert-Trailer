@@ -131,11 +131,93 @@ bool ExampleApp::Initialize() {
 
         m_basicList.push_back(m_testObj1); // 리스트에 등록
 
-        m_grass = make_shared<GrassModel>(m_device, m_context);
-        m_grass->scale = 3.5f;
-        m_grass->position = Vector3(10.5f, -2.1f, -18.9f);
-        m_grass->rotation.y = 0.75f;
-        m_basicGrass = m_grass;
+    }
+
+    //Grass
+    {
+        m_grass = make_shared<GrassModel>();
+        m_grass->scale = 1.393f;
+        m_grass->position = Vector3(0.922f, -1.035f, -3.092f);
+        m_grass->rotation.y = -0.198f;
+        m_grass->Initialize(m_device, m_context);
+        m_grassList.push_back(m_grass);
+
+
+        m_grass1 = make_shared<GrassModel>();
+        m_grass1->scale = 1.35f;
+        m_grass1->g_scale = 1.5f;
+        m_grass1->square_xLength = 1.2f;
+        m_grass1->square_zLength = 0.3f;
+        m_grass1->xfreq = 30;
+        m_grass1->yfreq = 30;
+        m_grass1->dx = 0.13f;
+        m_grass1->dy = 0.13f;
+        m_grass1->threshold = 0.5f;
+        m_grass1->position = Vector3(3.510f, -0.863f, 1.477f);
+        m_grass1->rotation.y = -0.198f;
+        m_grass1->Initialize(m_device, m_context);
+        m_grassList.push_back(m_grass1);
+
+        m_grass2 = make_shared<GrassModel>();
+        m_grass2->scale = 1.35f;
+        m_grass2->g_scale = 1.2f;
+        m_grass2->square_xLength = 0.3f;
+        m_grass2->square_zLength = 1.0f;
+        m_grass2->xfreq = 40;
+        m_grass2->yfreq = 40;
+        m_grass2->dx = 0.10f;
+        m_grass2->dy = 0.10f;
+        m_grass2->threshold = 0.5f;
+        m_grass2->position = Vector3(6.052f, -0.784f, -1.813f);
+        m_grass2->rotation.y = -0.198f;
+        m_grass2->Initialize(m_device, m_context);
+        m_grassList.push_back(m_grass2);
+
+        m_grass3 = make_shared<GrassModel>();
+        m_grass3->scale = 1.35f;
+        m_grass3->g_scale = 1.2f;
+        m_grass3->square_xLength = 0.7f;
+        m_grass3->square_zLength = 0.4f;
+        m_grass3->xfreq = 30;
+        m_grass3->yfreq = 30;
+        m_grass3->dx = 0.12f;
+        m_grass3->dy = 0.12f;
+        m_grass3->threshold = 0.5f;
+        m_grass3->position = Vector3(4.473f, -0.981f, -1.814f);
+        m_grass3->rotation.y = -0.098f;
+        m_grass3->Initialize(m_device, m_context);
+        m_grassList.push_back(m_grass3);
+
+        m_grass4 = make_shared<GrassModel>();
+        m_grass4->scale = 1.35f;
+        m_grass4->g_scale = 1.0f;
+        m_grass4->square_xLength = 0.7f;
+        m_grass4->square_zLength = 0.4f;
+        m_grass4->xfreq = 30;
+        m_grass4->yfreq = 30;
+        m_grass4->dx = 0.12f;
+        m_grass4->dy = 0.12f;
+        m_grass4->threshold = 0.5f;
+        m_grass4->position = Vector3(1.710f, -0.92f, -2.997f);
+        m_grass4->rotation.y = -0.198f;
+        m_grass4->Initialize(m_device, m_context);
+        m_grassList.push_back(m_grass4);   
+
+        m_grass5 = make_shared<GrassModel>();
+        m_grass5->scale = 1.35f;
+        m_grass5->g_scale = 1.3f;
+        m_grass5->square_xLength = 1.0f;
+        m_grass5->square_zLength = 1.5f;
+        m_grass5->xfreq = 40;
+        m_grass5->yfreq = 40;
+        m_grass5->dx = 0.12f;
+        m_grass5->dy = 0.12f;
+        m_grass5->threshold = 0.5f;
+        m_grass5->position = Vector3(-2.763f, -0.882f, -1.823f);
+        m_grass5->rotation.y = -0.198f;
+        m_grass5->Initialize(m_device, m_context);
+        m_grassList.push_back(m_grass5);
+
     }
 
     // 조명 설정
@@ -146,7 +228,7 @@ bool ExampleApp::Initialize() {
         m_globalConstsCPU.lights[0].direction = Vector3(2.245f, -2.066f, -1.6f);
         m_globalConstsCPU.lights[0].spotPower = 1.185f;
         m_globalConstsCPU.lights[0].radius = 0.02f;
-        m_globalConstsCPU.lights[0].type =
+        m_globalConstsCPU.lights[0].type =    
             LIGHT_SPOT | LIGHT_SHADOW; // Point with shadow
         /* 
         m_globalConstsCPU.lights[1].radiance = Vector3(5.0f);
@@ -265,13 +347,23 @@ void ExampleApp::Update(float dt) {
                           Matrix::CreateRotationY(3.1415f * i->rotation.y) *
                           Matrix::CreateTranslation(i->position));
     }
-    if (m_basicGrass) {
+    /* if (m_basicGrass) {
         m_basicGrass->UpdateWorldRow(
             Matrix::CreateScale(m_basicGrass->scale) *
             Matrix::CreateRotationY(3.1415f * m_basicGrass->rotation.y) *
             Matrix::CreateTranslation(m_basicGrass->position));
         m_basicGrass->UpdateConstantBuffers(m_device, m_context);
+    }*/
+
+    for (auto& i : m_grassList)
+    {
+        i->UpdateWorldRow(
+            Matrix::CreateScale(i->scale) *
+            Matrix::CreateRotationY(3.1415f * i->rotation.y) *
+            Matrix::CreateTranslation(i->position));
+        i->UpdateConstantBuffers(m_device, m_context);
     }
+
 
     for (auto &i : m_basicList) {
         i->UpdateConstantBuffers(m_device, m_context);
@@ -317,10 +409,10 @@ void ExampleApp::Render() {
             for (auto &i : m_basicList)
                 if (i->m_castShadow && i->m_isVisible)
                     i->Render(m_context);
-            for (auto &i : m_tessellatedTriangleList)
+            for (auto &i : m_tessellatedTriangleList) //SetPipeLineState가 Tesselation이아니라 Basic으로 그려짐
                 if (i->m_castShadow && i->m_isVisible)
                     i->TessellatedRender(m_context);
-            // m_skybox->Render(m_context);
+ 
         }
     }
 
@@ -363,9 +455,16 @@ void ExampleApp::Render() {
 
     AppBase::SetPipelineState(m_drawAsWire ? Graphics::grassWirePSO
                                            : Graphics::grassSolidPSO);
-    if (m_basicGrass) {
-        m_basicGrass->Render(m_context);
+
+    //if (m_basicGrass) {
+    //    m_basicGrass->Render(m_context);
+    //}
+    for (auto& i : m_grassList)
+    {
+        i->Render(m_context);
     }
+
+    
 
     AppBase::SetPipelineState(Graphics::normalsPSO);
     for (auto &i : m_basicList) {
@@ -381,7 +480,7 @@ void ExampleApp::Render() {
     m_context->ResolveSubresource(m_resolvedBuffer.Get(), 0,
                                   m_floatBuffer.Get(), 0,
                                   DXGI_FORMAT_R16G16B16A16_FLOAT);
-
+     
     // PostEffects
     AppBase::SetPipelineState(Graphics::postEffectsPSO);
 
@@ -466,7 +565,7 @@ void ExampleApp::UpdateGUI() {
         ImGui::TreePop();
     }
 
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if (ImGui::TreeNode("Light1")) {
         // ImGui::SliderFloat3("Position",
         // &m_globalConstsCPU.lights[0].position.x,
@@ -499,36 +598,9 @@ void ExampleApp::UpdateGUI() {
             m_globalConstsCPU.lights[0].radiance.x;
         ImGui::TreePop();
     }
-    /*
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Light2")) {
-        // ImGui::SliderFloat3("Position",
-        // &m_globalConstsCPU.lights[0].position.x,
-        //                     -5.0f, 5.0f);
-        ImGui::SliderFloat("Radius", &m_globalConstsCPU.lights[1].radius, 0.0f,
-                           1.0f);
-        ImGui::SliderFloat("PositionX", &m_globalConstsCPU.lights[1].position.x,
-                           -50.0f, 50.0f);
-        ImGui::SliderFloat("PositionY", &m_globalConstsCPU.lights[1].position.y,
-                           -10.0f, 15.0f);
-        ImGui::SliderFloat("PositionZ", &m_globalConstsCPU.lights[1].position.z,
-                           -20.0f, 60.0f);
-        ImGui::SliderFloat("DirectionX",
-                           &m_globalConstsCPU.lights[1].direction.x, -20.0f,
-                           10.0f);
-        ImGui::SliderFloat("DirectionY",
-                           &m_globalConstsCPU.lights[1].direction.y, -10.0f,
-                           10.0f);
-        ImGui::SliderFloat("DirectionZ",
-                           &m_globalConstsCPU.lights[1].direction.z, -10.0f,
-                           10.0f);
-        ImGui::SliderFloat("SpotPower", &m_globalConstsCPU.lights[1].spotPower,
-                           0.0f, 10.0f);
-        ImGui::TreePop();
-    }*/
 
 
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if (ImGui::TreeNode("Test1")) {
 
         ImGui::SliderFloat("Scale", &m_testObj1->scale, 0.1f, 300.0f);
@@ -541,22 +613,22 @@ void ExampleApp::UpdateGUI() {
         ImGui::SliderFloat("RotationY", &m_testObj1->rotation.y, 0.0f, 3.0f);
         ImGui::TreePop();
     }
-
+    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Grass")) {
 
         ImGui::SliderFloat("Wind", &m_windStrength, -3.0f, 3.0f);
-        ImGui::SliderFloat("Scale", &m_grass->scale, 0.1f, 30.0f);
-        ImGui::SliderFloat("PositionX", &m_grass->position.x, -20.0f,
-                           20.0f);
-        ImGui::SliderFloat("PositionY", &m_grass->position.y, -10.0f, 10.0f);
-        ImGui::SliderFloat("PositionZ", &m_grass->position.z, -25.0f,
-                           25.0f);
+        ImGui::SliderFloat("Scale", &m_grass5->scale, 0.1f, 30.0f);
+        ImGui::SliderFloat("PositionX", &m_grass5->position.x, -10.0f,
+                           10.0f);
+        ImGui::SliderFloat("PositionY", &m_grass5->position.y, -3.0f, 3.0f);
+        ImGui::SliderFloat("PositionZ", &m_grass5->position.z, -10.0f,
+                           10.0f);
 
-        ImGui::SliderFloat("RotationY", &m_grass->rotation.y, 0.0f, 3.0f);
+        ImGui::SliderFloat("RotationY", &m_grass5->rotation.y, -2.0f, 3.0f);
         ImGui::TreePop();
     }
 
-    ImGui::SetNextItemOpen(true, ImGuiCond_Once);
+    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if (ImGui::TreeNode("Material")) {
         ImGui::SliderFloat("LodBias", &m_globalConstsCPU.lodBias, 0.0f, 10.0f);
 

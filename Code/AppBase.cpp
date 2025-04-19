@@ -246,6 +246,13 @@ void AppBase::UpdateGlobalConstants(const float &dt, const Vector3 &eyeWorld,
     m_globalConstsCPU.invViewProj = m_globalConstsCPU.viewProj.Invert();
     m_globalConstsCPU.windStrength = windStrength;
 
+    /* for (int i = 0; i < MAX_LIGHTS; i++) { //잔디 그림자 구현한다면 필요
+        m_shadowGlobalConstsCPU[i].globalTime += dt;
+        m_shadowGlobalConstsCPU[i].windStrength = windStrength;
+        D3D11Utils::UpdateBuffer(m_context, m_shadowGlobalConstsCPU[i],
+                                 m_shadowGlobalConstsGPU[i]);
+    }*/
+
     m_reflectGlobalConstsCPU = m_globalConstsCPU;
     memcpy(&m_reflectGlobalConstsCPU, &m_globalConstsCPU,
            sizeof(m_globalConstsCPU));

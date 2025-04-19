@@ -17,13 +17,10 @@ struct GrassVertexInput
     matrix insWorld : WORLD; // Instance World
 };
 
-struct GrassPixelInput
+struct DepthOnlyPixelShaderInput
 {
     float4 posProj : SV_POSITION;
     float3 posWorld : POSITION;
-    float3 normalWorld : NORMAL;
-    float2 texcoord : TEXCOORD;
-    float3 baseColor : COLOR;
 };
 
 static float3 debugColors[3] = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
@@ -69,7 +66,7 @@ float WaveFunc2(float x, float u_time)
 // Quaternion structure for HLSL
 // https://gist.github.com/mattatz/40a91588d5fb38240403f198a938a593
 
-// A given angle of rotation about a given axis. 
+// A given angle of rotation about a given axis
 float4 rotate_angle_axis(float angle, float3 axis)
 {
     float sn = sin(angle * 0.5);
@@ -104,17 +101,16 @@ float4x4 quaternion_to_matrix(float4 quat)
     return m;
 }
 
-GrassPixelInput main(uint instanceID : SV_InstanceID, // 참고/디버깅용
+DepthOnlyPixelShaderInput main(uint instanceID : SV_InstanceID, // 참고/디버깅용
                      GrassVertexInput input)
 {
-    GrassPixelInput output;
+    DepthOnlyPixelShaderInput output;
    
     // 편의상 worldIT == world 라고 가정 (isotropic scaling)
     
     // 주의: input.insWorld, world 두 번 변환
 
     output.posWorld = mul(float4(input.posModel, 1.0f), input.insWorld).xyz;
-    output.posWorld = mul(float4(output.posWorld, 1.0f), world).xyz;
     
     // Deform by wind
     float4x4 mWind = float4x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
@@ -124,30 +120,20 @@ GrassPixelInput main(uint instanceID : SV_InstanceID, // 참고/디버깅용
     float2 rotCenter = float2(0.0f, 0.1f);
     float2 temp = (input.posModel.xy - rotCenter);
     float coeff = pow(max(0, temp.y), 2.0);
-    
     float3 axis = cross(coeff * windWorld, float3(0, 1, 0));
     float4 q = rotate_angle_axis(windStrength, axis);
     mWind = quaternion_to_matrix(q);
-
     
-    output.normalWorld = mul(float4(input.normalModel, 0.0f), input.insWorld).xyz;
-    output.normalWorld = mul(float4(output.normalWorld, 0.0f), worldIT).xyz;
-    output.normalWorld = mul(float4(output.normalWorld, 0.0f), mWind).xyz;
-    output.normalWorld = normalize(output.normalWorld);
     
-    float3 insTranslation = mul(float4(0, 0, 0, 1), input.insWorld).xyz;
-    float3 worldTranslation = mul(float4(insTranslation, 1.0f), world).xyz;
-
-    output.posWorld -= worldTranslation;
+    float3 translation = input.insWorld._m30_m31_m32;
+    output.posWorld -= translation;
     
     output.posWorld = mul(float4(output.posWorld, 1.0f), mWind).xyz;
     
-    output.posWorld += worldTranslation;
+    output.posWorld += translation;
+    
     output.posWorld = mul(float4(output.posWorld, 1.0f), world).xyz;
     output.posProj = mul(float4(output.posWorld, 1.0), viewProj);
-    output.texcoord = input.texcoord;
 
-    output.baseColor = float3(139/255.0, 69/255.0, 19/255.0) * pow(saturate(input.texcoord.y), 4.0);
-    
     return output;
 }

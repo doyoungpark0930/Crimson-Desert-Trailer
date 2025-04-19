@@ -70,6 +70,12 @@
     <FxCompile Include="GrassPS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="DepthOnlyGrassVS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
+    <FxCompile Include="DepthOnlyGrassPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D11Utils.cpp" />
@@ -109,6 +115,7 @@
     <ClInclude Include="GrassModel.h">
       <Filter>Models</Filter>
     </ClInclude>
+    <ClInclude Include="PerlinNoise.hpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include=".clang-format" />
