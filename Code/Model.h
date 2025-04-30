@@ -47,6 +47,7 @@ class Model {
     bool m_drawNormals = false;
     bool m_isVisible = true;
     bool m_castShadow = true;
+    bool m_cloud = false;
 
     float scale = 1.0f;
     Vector3 position = Vector3(0.0f, 0.0f, 0.0f);

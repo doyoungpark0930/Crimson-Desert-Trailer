@@ -156,7 +156,7 @@ void Model::TessellatedRender(ComPtr<ID3D11DeviceContext> &context) {
                                           mesh->meshConstsGPU.GetAddressOf());
             context->PSSetConstantBuffers(
                 0, 1, mesh->materialConstsGPU.GetAddressOf());
-             
+                
             // 물체 렌더링할 때 여러가지 텍스춰 사용 (t0 부터시작) 
             vector<ID3D11ShaderResourceView *> resViews = {
                 mesh->albedoSRV.Get(), mesh->normalSRV.Get(), mesh->aoSRV.Get(),

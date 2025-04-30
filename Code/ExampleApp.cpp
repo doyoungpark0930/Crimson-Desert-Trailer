@@ -14,7 +14,7 @@ namespace hlab {
 using namespace std;
 using namespace DirectX;
 using namespace DirectX::SimpleMath;
-
+ 
 ExampleApp::ExampleApp() : AppBase() {}
 
 bool ExampleApp::Initialize() {
@@ -96,27 +96,7 @@ bool ExampleApp::Initialize() {
             {5.0f, 5.0f});
         test1[0].normalTextureFilename =
             "../Assets/Textures/PBR/TCom_Ground_Soil18_2.5x2.5_2K/"
-            "TCom_Ground_Soil18_2.5x2.5_2K_normal.tif";
-        /*
-        test1[0].albedoTextureFilename =
-            "../Assets/Textures/PBR/TCom_Ground_Soil18_2.5x2.5_2K/"
-            "TCom_Ground_Soil18_2.5x2.5_2K_albedo.tif";
-
-        test1[0].normalTextureFilename =
-            "../Assets/Textures/PBR/TCom_Ground_Soil18_2.5x2.5_2K/"
-            "TCom_Ground_Soil18_2.5x2.5_2K_normal.tif";
-
-        test1[0].heightTextureFilename =
-            "../Assets/Textures/PBR/TCom_Ground_Soil18_2.5x2.5_2K/"
-            "TCom_Ground_Soil18_2.5x2.5_2K_height.tif";
-
-        test1[0].aoTextureFilename =
-            "../Assets/Textures/PBR/TCom_Ground_Soil18_2.5x2.5_2K/"
-            "TCom_Ground_Soil18_2.5x2.5_2K_ao.tif";
-
-        test1[0].roughnessTextureFilename =
-            "../Assets/Textures/PBR/TCom_Ground_Soil18_2.5x2.5_2K/"
-            "TCom_Ground_Soil18_2.5x2.5_2K_roughness.tif";*/
+            "TCom_Ground_Soil18_2.5x2.5_2K_normal.tif"; 
 
         m_testObj1 = make_shared<Model>(m_device, m_context, test1);
         m_testObj1->m_materialConsts.GetCpu().invertNormalMapY =
@@ -201,7 +181,7 @@ bool ExampleApp::Initialize() {
         m_grass4->position = Vector3(1.710f, -0.92f, -2.997f);
         m_grass4->rotation.y = -0.198f;
         m_grass4->Initialize(m_device, m_context);
-        m_grassList.push_back(m_grass4);   
+        m_grassList.push_back(m_grass4);
 
         m_grass5 = make_shared<GrassModel>();
         m_grass5->scale = 1.35f;
@@ -218,9 +198,34 @@ bool ExampleApp::Initialize() {
         m_grass5->Initialize(m_device, m_context);
         m_grassList.push_back(m_grass5);
 
+        m_grass6 = make_shared<GrassModel>();
+        m_grass6->scale = 0.956f;
+        m_grass6->g_scale = 1.3f;
+        m_grass6->square_xLength = 2.0f;
+        m_grass6->square_zLength = 3.0f;
+        m_grass6->xfreq = 50;
+        m_grass6->yfreq = 50;
+        m_grass6->dx = 0.1f;
+        m_grass6->dy = 0.1f;
+        m_grass6->threshold = 0.5f;
+        m_grass6->position = Vector3(2.106f, -0.960f, -3.552f);
+        m_grass6->rotation.y = -0.198f;
+        m_grass6->Initialize(m_device, m_context);
+        m_grassList.push_back(m_grass6);
+
     }
 
-    // 조명 설정
+    //Cloud
+    {   
+        MeshData meshData = GeometryGenerator::MakeSquare();
+        m_Cloud =
+            make_shared<Model>(m_device, m_context, vector{meshData});
+        D3D11Utils::CreateConstBuffer(m_device, m_volumeConstsCpu,
+                                      m_volumeConstsGpu);
+        m_Cloud->m_cloud = true;
+    }
+               
+    // 조명 설정   
     {
         // 조명 0은 고정
         m_globalConstsCPU.lights[0].radiance = Vector3(1.466f);
@@ -262,7 +267,7 @@ bool ExampleApp::Initialize() {
     }
 
     return true;
-}
+} 
 
 void ExampleApp::UpdateLights(float dt) {
 
@@ -317,12 +322,11 @@ void ExampleApp::UpdateLights(float dt) {
 }
 
 void ExampleApp::Update(float dt) {
-
     // 카메라의 이동
     m_camera.UpdateKeyboard(dt, m_keyPressed);
 
     // 반사 행렬 추가
-    const Vector3 eyeWorld = m_camera.GetEyePos();
+    const Vector3 eyeWorld = m_camera.GetEyePos(); 
     const Matrix reflectRow;
     const Matrix viewRow = m_camera.GetViewRow();
     const Matrix projRow = m_camera.GetProjRow();
@@ -488,8 +492,8 @@ void ExampleApp::Render() {
     AppBase::SetGlobalConsts(m_shadowGlobalConstsGPU[0]);
     vector<ID3D11ShaderResourceView *> postEffectsSRVs = {
         m_resolvedSRV.Get(), m_shadowSRVs[0].Get()};
-
-    // 20번에 넣어줌
+       
+    // 20번에 넣어줌  
     m_context->PSSetShaderResources(20, UINT(postEffectsSRVs.size()),
                                     postEffectsSRVs.data());
     m_context->OMSetRenderTargets(1, m_postEffectsRTV.GetAddressOf(), NULL);
@@ -500,6 +504,15 @@ void ExampleApp::Render() {
     // 단순 이미지 처리와 블룸
     AppBase::SetPipelineState(Graphics::postProcessingPSO);
     m_postProcess.Render(m_context);
+
+    AppBase::SetPipelineState(Graphics::volumeSmokePSO);
+    AppBase::SetGlobalConsts(m_globalConstsGPU);
+    if (m_Cloud->m_cloud)
+    {
+        m_Cloud->Render(m_context);
+        m_context->PSSetConstantBuffers(3, 1, m_volumeConstsGpu.GetAddressOf());
+    }
+
 }
 
 void ExampleApp::UpdateGUI() {
@@ -542,6 +555,8 @@ void ExampleApp::UpdateGUI() {
         if (flag)
             D3D11Utils::UpdateBuffer(m_context, m_postEffectsConstsCPU,
                                      m_postEffectsConstsGPU);
+
+        ImGui::Checkbox("Cloud", &m_Cloud->m_cloud);
 
         ImGui::TreePop();
     }
@@ -614,17 +629,17 @@ void ExampleApp::UpdateGUI() {
         ImGui::TreePop();
     }
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
-    if (ImGui::TreeNode("Grass")) {
-
+    if (ImGui::TreeNode("Grass")) {  
+         
         ImGui::SliderFloat("Wind", &m_windStrength, -3.0f, 3.0f);
-        ImGui::SliderFloat("Scale", &m_grass5->scale, 0.1f, 30.0f);
-        ImGui::SliderFloat("PositionX", &m_grass5->position.x, -10.0f,
+        ImGui::SliderFloat("Scale", &m_grass6->scale, 0.1f, 30.0f);
+        ImGui::SliderFloat("PositionX", &m_grass6->position.x, -10.0f,
                            10.0f);
-        ImGui::SliderFloat("PositionY", &m_grass5->position.y, -3.0f, 3.0f);
-        ImGui::SliderFloat("PositionZ", &m_grass5->position.z, -10.0f,
+        ImGui::SliderFloat("PositionY", &m_grass6->position.y, -3.0f, 3.0f);
+        ImGui::SliderFloat("PositionZ", &m_grass6->position.z, -10.0f,
                            10.0f);
 
-        ImGui::SliderFloat("RotationY", &m_grass5->rotation.y, -2.0f, 3.0f);
+        ImGui::SliderFloat("RotationY", &m_grass6->rotation.y, -2.0f, 3.0f);
         ImGui::TreePop();
     }
 

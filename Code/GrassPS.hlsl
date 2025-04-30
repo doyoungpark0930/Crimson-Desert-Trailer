@@ -38,15 +38,17 @@ float4 main(GrassPixelInput input) : SV_TARGET
     float lightDist = length(lightDir);
     lightDir /= lightDist;
     
+    float fallOffEnd = 60.0f; //잔디는 FallOffEnd 여기서 따로 설정
     // Distance attenuation
-    float att = saturate((lights[0].fallOffEnd - lightDist)
-                         / (lights[0].fallOffEnd - lights[0].fallOffStart));
+    float att = saturate((fallOffEnd - lightDist)
+                         / (fallOffEnd - lights[0].fallOffStart));
     
-    float spotFator = lights[0].type & LIGHT_SPOT
-                     ? pow(max(-dot(lightDir, lights[0].direction), 0.0f), lights[0].spotPower*5.0)
-                      : 1.0f;
+    //그림자 효과 나타내기. 아래는 어둡게 위는 밝게, 빛과 가까울 수록 그림자 효과 떨어지도록 4.0*(1-att)함
+    input.baseColor = float3(139 / 255.0, 69 / 255.0, 19 / 255.0) * pow(saturate(input.texcoord.y), 4.0 * (1-att));
+    
+    att = pow(att, 3.0);
     
     // 간단한 directional light, 양면이라서 abs 사용
-    float3 color = input.baseColor * abs(dot(input.normalWorld, lightDir)) *att * lights[0].radiance*spotFator;
+    float3 color = input.baseColor * abs(dot(input.normalWorld, lightDir)) * att * lights[0].radiance * 8.0;
     return float4(color, 1);
 }

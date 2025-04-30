@@ -1,4 +1,5 @@
 #include "Common.hlsli"
+#include "TileableNoise.hlsli"
 
 cbuffer MeshConstants : register(b0)
 {
@@ -26,9 +27,9 @@ struct GrassPixelInput
     float3 baseColor : COLOR;
 };
 
-static float3 debugColors[3] = { { 1, 0, 0 }, { 0, 1, 0 }, { 0, 0, 1 } };
 
 // https://thebookofshaders.com/13/
+/*
 float WaveFunc1(float x, float u_time)
 {
     // 여러 가지 경우에 대해 보여주기
@@ -37,8 +38,9 @@ float WaveFunc1(float x, float u_time)
     float amplitude = 1.;
     float frequency = 0.5;
     
-    float y = sin(x * frequency);
+    float y = sin(x * frequency); //파동하나
     float t = 0.01 * (-u_time * 130.0);
+    //여러개의 파동을 합치면 하나의 파동처럼 보임을 응용
     y += sin(x * frequency * 2.1 + t) * 4.5;
     y += sin(x * frequency * 1.72 + t * 1.121) * 4.0;
     y += sin(x * frequency * 2.221 + t * 0.437) * 5.0;
@@ -48,9 +50,10 @@ float WaveFunc1(float x, float u_time)
     return y;
 }
 
+
 float WaveFunc2(float x, float u_time)
 {
-    return 0;
+    //return 0;
     
     float amplitude = 1.;
     float frequency = 0.1;
@@ -65,6 +68,8 @@ float WaveFunc2(float x, float u_time)
     
     return y;
 }
+*/
+
 
 // Quaternion structure for HLSL
 // https://gist.github.com/mattatz/40a91588d5fb38240403f198a938a593
@@ -119,7 +124,24 @@ GrassPixelInput main(uint instanceID : SV_InstanceID, // 참고/디버깅용
     // Deform by wind
     float4x4 mWind = float4x4(1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1);
 
-    float3 windWorld = float3(WaveFunc1(output.posWorld.x, globalTime), 0, WaveFunc2(output.posWorld.z, globalTime + 123.0f)) * windStrength;
+    //사인파 중첩
+    //float3 windWorld = float3(WaveFunc1(output.posWorld.x, globalTime), 0, WaveFunc2(output.posWorld.z, globalTime + 123.0f)) * windStrength;
+ 
+    
+    //펄린 노이즈 사용
+    float2 posXZ = output.posWorld.xz;
+    
+    //freq값
+    //0.1 : 넓고 느린곡선, 슬로우 바람
+    //0.5 : 적당한 웨이브, 잔잔한 바람
+    //2.0 : 미세한 잔떨림, 잔디 끝이 흔들림
+    //octaves 수
+    //1 : 가장 기본적인 한 계층의 부드러운 노이즈
+    //3~5 : 현실적인 바람효과, 자연스럽고 리듬감 있음
+    //6이상 : 부자연스럽, aliasing생길 수도 있음
+    float noiseX = perlinfbm2D(posXZ + float2(0.0, 0.0) + globalTime, 0.2, 4); // 또는 원하는 freq
+    float noiseZ = 0.6 * perlinfbm2D(posXZ + float2(123.0, 456.0) + globalTime, 0.2, 4); // 서로 다른 오프셋 줘야 효과 좋아
+    float3 windWorld = float3(noiseX, 0, noiseZ) * windStrength;
     
     float2 rotCenter = float2(0.0f, 0.1f);
     float2 temp = (input.posModel.xy - rotCenter);
@@ -147,7 +169,6 @@ GrassPixelInput main(uint instanceID : SV_InstanceID, // 참고/디버깅용
     output.posProj = mul(float4(output.posWorld, 1.0), viewProj);
     output.texcoord = input.texcoord;
 
-    output.baseColor = float3(139/255.0, 69/255.0, 19/255.0) * pow(saturate(input.texcoord.y), 4.0);
     
     return output;
 }

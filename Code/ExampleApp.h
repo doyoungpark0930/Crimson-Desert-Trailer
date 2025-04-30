@@ -37,6 +37,8 @@ class ExampleApp : public AppBase {
     shared_ptr<GrassModel> m_grass3;
     shared_ptr<GrassModel> m_grass4;
     shared_ptr<GrassModel> m_grass5;
+    shared_ptr<GrassModel> m_grass6;
+    shared_ptr<Model> m_Cloud;
     shared_ptr<Model> m_lightSphere[MAX_LIGHTS];
     shared_ptr<Model> m_skybox;
     shared_ptr<Model> m_mountain;
@@ -60,6 +62,7 @@ class ExampleApp : public AppBase {
     vector<shared_ptr<Model>> m_tessellatedTriangleList;
     shared_ptr<Model> m_basicGrass;
     vector<shared_ptr<Model>> m_grassList;
+
 };
 
 } // namespace hlab

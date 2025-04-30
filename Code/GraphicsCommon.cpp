@@ -27,6 +27,8 @@ ComPtr<ID3D11DepthStencilState> drawMaskedDSS; // 스텐실 표시된 곳만
 
 // Blend States
 ComPtr<ID3D11BlendState> mirrorBS;
+ComPtr<ID3D11BlendState> accumulateBS;
+ComPtr<ID3D11BlendState> alphaBS;
 
 // Shaders
 ComPtr<ID3D11VertexShader> basicVS;
@@ -49,6 +51,7 @@ ComPtr<ID3D11PixelShader> depthOnlyPS;
 ComPtr<ID3D11PixelShader> depthOnlyGrassPS;
 ComPtr<ID3D11PixelShader> postEffectsPS;
 ComPtr<ID3D11PixelShader> grassPS;
+ComPtr<ID3D11PixelShader> CloudPS;
 
 
 ComPtr<ID3D11GeometryShader> normalGS;
@@ -88,6 +91,8 @@ GraphicsPSO postEffectsPSO;
 GraphicsPSO postProcessingPSO;
 GraphicsPSO grassSolidPSO;
 GraphicsPSO grassWirePSO;
+
+GraphicsPSO volumeSmokePSO;
 
 } // namespace Graphics
 
@@ -218,6 +223,38 @@ void Graphics::InitBlendStates(ComPtr<ID3D11Device> &device) {
 
     ThrowIfFailed(
         device->CreateBlendState(&mirrorBlendDesc, mirrorBS.GetAddressOf()));
+
+    D3D11_BLEND_DESC blendDesc;
+    ZeroMemory(&blendDesc, sizeof(blendDesc));
+    blendDesc.AlphaToCoverageEnable = true; // MSAA
+    blendDesc.IndependentBlendEnable = false;
+    blendDesc.RenderTarget[0].BlendEnable = true;
+    blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_BLEND_FACTOR;
+    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_BLEND_FACTOR; // INV 아님
+    blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+    blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].RenderTargetWriteMask =
+        D3D11_COLOR_WRITE_ENABLE_ALL;
+    ThrowIfFailed(
+        device->CreateBlendState(&blendDesc, accumulateBS.GetAddressOf()));
+
+    // Dst: 현재 백버퍼, Src: 새로 픽셀 쉐이더에서 출력,
+    ZeroMemory(&blendDesc, sizeof(blendDesc));
+    blendDesc.AlphaToCoverageEnable = false; // <- 주의: FALSE
+    blendDesc.IndependentBlendEnable = false;
+    blendDesc.RenderTarget[0].BlendEnable = true;
+    blendDesc.RenderTarget[0].SrcBlend = D3D11_BLEND_SRC_ALPHA;
+    blendDesc.RenderTarget[0].DestBlend = D3D11_BLEND_INV_SRC_ALPHA;
+    blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_ADD;
+    // blendDesc.RenderTarget[0].BlendOp = D3D11_BLEND_OP_MAX;
+    blendDesc.RenderTarget[0].SrcBlendAlpha = D3D11_BLEND_ONE;
+    blendDesc.RenderTarget[0].DestBlendAlpha = D3D11_BLEND_ONE;
+    blendDesc.RenderTarget[0].BlendOpAlpha = D3D11_BLEND_OP_ADD;
+    blendDesc.RenderTarget[0].RenderTargetWriteMask =
+        D3D11_COLOR_WRITE_ENABLE_ALL;
+    ThrowIfFailed(device->CreateBlendState(&blendDesc, alphaBS.GetAddressOf()));
 }
 
 void Graphics::InitDepthStencilStates(ComPtr<ID3D11Device> &device) {
@@ -375,6 +412,7 @@ void Graphics::InitShaders(ComPtr<ID3D11Device> &device) {
     D3D11Utils::CreatePixelShader(device, L"DepthOnlyGrassPS.hlsl", depthOnlyGrassPS);
     D3D11Utils::CreatePixelShader(device, L"PostEffectsPS.hlsl", postEffectsPS);
     D3D11Utils::CreatePixelShader(device, L"GrassPS.hlsl", grassPS);
+    D3D11Utils::CreatePixelShader(device, L"CloudPS.hlsl", CloudPS);
 
 
     D3D11Utils::CreateGeometryShader(device, L"NormalGS.hlsl", normalGS);
@@ -522,6 +560,14 @@ void Graphics::InitPipelineStates(ComPtr<ID3D11Device> &device) {
     postProcessingPSO.m_pixelShader = depthOnlyPS; // dummy
     postProcessingPSO.m_inputLayout = samplingIL;
     postProcessingPSO.m_rasterizerState = postProcessingRS;
+
+    // Cloud Test
+    volumeSmokePSO = defaultSolidPSO;
+    volumeSmokePSO.m_vertexShader = samplingVS;
+    volumeSmokePSO.m_inputLayout = samplingIL;
+    volumeSmokePSO.m_blendState = alphaBS;
+    volumeSmokePSO.m_rasterizerState = postProcessingRS;
+    volumeSmokePSO.m_pixelShader = CloudPS;
 }
 
 } // namespace hlab

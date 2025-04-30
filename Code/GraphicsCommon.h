@@ -52,6 +52,7 @@ extern ComPtr<ID3D11PixelShader> depthOnlyPS;
 extern ComPtr<ID3D11PixelShader> depthOnlyGrassPS;
 extern ComPtr<ID3D11PixelShader> postEffectsPS;
 extern ComPtr<ID3D11PixelShader> grassPS;
+extern ComPtr<ID3D11PixelShader> CloudPS;
 
 extern ComPtr<ID3D11GeometryShader> normalGS;
 extern ComPtr<ID3D11HullShader> tessellatedQuadHS;
@@ -68,6 +69,8 @@ extern ComPtr<ID3D11InputLayout> grassIL;
 
 // Blend States
 extern ComPtr<ID3D11BlendState> mirrorBS;
+extern ComPtr<ID3D11BlendState> accumulateBS;
+extern ComPtr<ID3D11BlendState> alphaBS;
 
 // Graphics Pipeline States
 extern GraphicsPSO defaultSolidPSO;
@@ -92,6 +95,7 @@ extern GraphicsPSO postEffectsPSO;
 extern GraphicsPSO postProcessingPSO;
 extern GraphicsPSO grassSolidPSO;
 extern GraphicsPSO grassWirePSO;
+extern GraphicsPSO volumeSmokePSO;
 
 void InitCommonStates(ComPtr<ID3D11Device> &device);
 

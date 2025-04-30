@@ -122,6 +122,9 @@
     <None Include="Common.hlsli">
       <Filter>Shader</Filter>
     </None>
+    <None Include="TileableNoise.hlsli">
+      <Filter>Shader</Filter>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Shader">

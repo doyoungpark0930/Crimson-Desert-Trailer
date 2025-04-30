@@ -121,6 +121,11 @@ __declspec(align(256)) struct PostEffectsConstants {
     float fogStrength = 0.0f;
 };
 
+__declspec(align(256)) struct VolumeConsts {
+    Vector3 lightDir = Vector3(-0.1246f, 0.2685f, 1.1246f);
+    float dummyC;
+};
+
 template <typename T_CONSTS> class ConstantBuffer {
   public:
     void Initialize(ComPtr<ID3D11Device> &device) {

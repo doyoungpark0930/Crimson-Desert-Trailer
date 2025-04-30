@@ -26,7 +26,7 @@ class GrassModel : public Model {
         std::mt19937 gen(0);
         std::uniform_real_distribution<float> dist(0.0f, 1.0f);
 
-        // perlinNoise랜덤함수 설정
+        // perlinNoise랜덤함수 설정 
         const siv::PerlinNoise::seed_type seed = 123456u;
 
         const siv::PerlinNoise perlin{seed};
@@ -36,7 +36,7 @@ class GrassModel : public Model {
         for (int i = 0; i < xfreq; i++) {
             for (int j = 0; j < yfreq; j++) {
                 const float lengthScale = (dist(gen) * 0.3 + 0.2f) * g_scale;
-                const float widthScale = (0.15f + dist(gen) * 0.2f) * g_scale;
+                const float widthScale = (0.2f + dist(gen) * 0.4f) * g_scale;
 
                 float x = i * dx;
                 float z = j * dy;

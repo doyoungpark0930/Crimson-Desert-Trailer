@@ -130,6 +130,10 @@ class AppBase {
     ComPtr<ID3D11Buffer> m_reflectGlobalConstsGPU;
     ComPtr<ID3D11Buffer> m_shadowGlobalConstsGPU[MAX_LIGHTS];
 
+    //Cloud
+    VolumeConsts m_volumeConstsCpu;
+    ComPtr<ID3D11Buffer> m_volumeConstsGpu;
+
     // 공통으로 사용하는 텍스춰들
     ComPtr<ID3D11ShaderResourceView> m_envSRV;
     ComPtr<ID3D11ShaderResourceView> m_irradianceSRV;

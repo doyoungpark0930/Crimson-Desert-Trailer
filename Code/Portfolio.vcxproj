@@ -169,6 +169,7 @@
   <ItemGroup>
     <None Include=".clang-format" />
     <None Include="Common.hlsli" />
+    <None Include="TileableNoise.hlsli" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="BasicPS.hlsl">
