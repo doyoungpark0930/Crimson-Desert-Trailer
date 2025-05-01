@@ -16,6 +16,8 @@ struct SamplingPixelShaderInput
     float2 texcoord : TEXCOORD;
 };
 
+
+
 float4 main(SamplingPixelShaderInput input) : SV_TARGET
 {
     float x = input.texcoord.x;
@@ -44,5 +46,5 @@ float4 main(SamplingPixelShaderInput input) : SV_TARGET
     color += (j + k + l + m) * 0.125;
   
     return float4(color, 1.0);
-    //return g_texture0.Sample(g_sampler, input.texcoord);
+
 }

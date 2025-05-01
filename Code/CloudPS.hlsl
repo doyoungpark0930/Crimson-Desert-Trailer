@@ -29,7 +29,7 @@ float3 fog(float3 col, float t)
 float4 cloudsFbm(float3 pos)
 {
     
-    float3 offset = float3(2.0, 1.1, 1.0) + 0.07 * float3(globalTime, 0.5 * globalTime, -0.15 * globalTime); // 움직임 속도 줄이기
+    float3 offset = float3(2.0, 1.1, 1.0) + 0.035 * float3(globalTime, 0.5 * globalTime, -0.15 * globalTime); // 움직임 속도 줄이기
     return fbmd_8(pos * 0.0015 + offset); // 스케일 줄여서 노이즈 더 촘촘하게
 }
 

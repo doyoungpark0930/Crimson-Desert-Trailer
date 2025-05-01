@@ -43,11 +43,6 @@ bool ExampleApp::Initialize() {
     // 테셀레이션 바닥
     {
 
-        /* auto ground = GeometryGenerator::ReadFromFile(
-            "../Assets/Textures/Objects/cliff_low/", "cliff_low.fbx",
-            false,
-            {10.0f, 10.0f});*/
-
         auto ground = GeometryGenerator::ReadFromFile(
             "../Assets/Textures/Objects/RockyDesert/", "RockyDesert_FBX.fbx",
             false, {5.0f, 5.0f});
@@ -214,7 +209,7 @@ bool ExampleApp::Initialize() {
         m_grassList.push_back(m_grass6);
 
     }
-
+     
     //Cloud
     {   
         MeshData meshData = GeometryGenerator::MakeSquare();
@@ -228,22 +223,14 @@ bool ExampleApp::Initialize() {
     // 조명 설정   
     {
         // 조명 0은 고정
-        m_globalConstsCPU.lights[0].radiance = Vector3(1.466f);
+        m_globalConstsCPU.lights[0].radiance = Vector3(2.233f);
         m_globalConstsCPU.lights[0].position = Vector3(-15.0f, 5.7f, 15.5f);
-        m_globalConstsCPU.lights[0].direction = Vector3(2.245f, -2.066f, -1.6f);
-        m_globalConstsCPU.lights[0].spotPower = 1.185f;
+        m_globalConstsCPU.lights[0].direction = Vector3(2.245f, -2.066f, -2.2f);
+        m_globalConstsCPU.lights[0].spotPower = 1.185f; 
         m_globalConstsCPU.lights[0].radius = 0.02f;
-        m_globalConstsCPU.lights[0].type =    
-            LIGHT_SPOT | LIGHT_SHADOW; // Point with shadow
-        /* 
-        m_globalConstsCPU.lights[1].radiance = Vector3(5.0f);
-        m_globalConstsCPU.lights[1].position = Vector3(11.0f, 1.0f, 5.0f);
-        m_globalConstsCPU.lights[1].direction = Vector3(2.245f, -2.066f, -1.6f);
-        m_globalConstsCPU.lights[1].spotPower = 1.5f;
-        m_globalConstsCPU.lights[1].radius = 0.02f;
-        m_globalConstsCPU.lights[1].type =
-            LIGHT_SPOT | LIGHT_SHADOW; // Point with shadow
-        */
+        m_globalConstsCPU.lights[0].type =         
+            LIGHT_SPOT | LIGHT_SHADOW; // Point with shadow 
+      
     }
 
     // 조명 위치 표시
@@ -262,7 +249,7 @@ bool ExampleApp::Initialize() {
             if (m_globalConstsCPU.lights[i].type == 0)
                 m_lightSphere[i]->m_isVisible = false;
             m_lightSphere[i]->position = m_globalConstsCPU.lights[i].position;
-            m_basicList.push_back(m_lightSphere[i]); // 리스트에 등록
+            //m_basicList.push_back(m_lightSphere[i]); // 리스트에 등록
         }
     }
 
@@ -294,17 +281,6 @@ void ExampleApp::UpdateLights(float dt) {
                 lightProjRow.Invert().Transpose();
             m_shadowGlobalConstsCPU[i].viewProj =
                 (lightViewRow * lightProjRow).Transpose();
-
-            // LIGHT_FRUSTUM_WIDTH 확인
-            // Vector4 eye(0.0f, 0.0f, 0.0f, 1.0f);
-            // Vector4 xLeft(-1.0f, -1.0f, 0.0f, 1.0f);
-            // Vector4 xRight(1.0f, 1.0f, 0.0f, 1.0f);
-            // eye = Vector4::Transform(eye, lightProjRow);
-            // xLeft = Vector4::Transform(xLeft, lightProjRow.Invert());
-            // xRight = Vector4::Transform(xRight, lightProjRow.Invert());
-            // xLeft /= xLeft.w;
-            // xRight /= xRight.w;
-            // cout << "LIGHT_FRUSTUM_WIDTH = " << xRight.x - xLeft.x << endl;
 
             D3D11Utils::UpdateBuffer(m_context, m_shadowGlobalConstsCPU[i],
                                      m_shadowGlobalConstsGPU[i]);
@@ -351,21 +327,16 @@ void ExampleApp::Update(float dt) {
                           Matrix::CreateRotationY(3.1415f * i->rotation.y) *
                           Matrix::CreateTranslation(i->position));
     }
-    /* if (m_basicGrass) {
-        m_basicGrass->UpdateWorldRow(
-            Matrix::CreateScale(m_basicGrass->scale) *
-            Matrix::CreateRotationY(3.1415f * m_basicGrass->rotation.y) *
-            Matrix::CreateTranslation(m_basicGrass->position));
-        m_basicGrass->UpdateConstantBuffers(m_device, m_context);
-    }*/
 
-    for (auto& i : m_grassList)
-    {
-        i->UpdateWorldRow(
-            Matrix::CreateScale(i->scale) *
-            Matrix::CreateRotationY(3.1415f * i->rotation.y) *
-            Matrix::CreateTranslation(i->position));
-        i->UpdateConstantBuffers(m_device, m_context);
+
+    for (auto& i : m_grassList) {
+        if (m_grassVisible)
+        {
+            i->UpdateWorldRow(Matrix::CreateScale(i->scale) *
+                              Matrix::CreateRotationY(3.1415f * i->rotation.y) *
+                              Matrix::CreateTranslation(i->position));
+            i->UpdateConstantBuffers(m_device, m_context);
+        }
     }
 
 
@@ -460,15 +431,11 @@ void ExampleApp::Render() {
     AppBase::SetPipelineState(m_drawAsWire ? Graphics::grassWirePSO
                                            : Graphics::grassSolidPSO);
 
-    //if (m_basicGrass) {
-    //    m_basicGrass->Render(m_context);
-    //}
+
     for (auto& i : m_grassList)
     {
-        i->Render(m_context);
-    }
-
-    
+        if (m_grassVisible) i->Render(m_context);
+    }  
 
     AppBase::SetPipelineState(Graphics::normalsPSO);
     for (auto &i : m_basicList) {
@@ -484,7 +451,7 @@ void ExampleApp::Render() {
     m_context->ResolveSubresource(m_resolvedBuffer.Get(), 0,
                                   m_floatBuffer.Get(), 0,
                                   DXGI_FORMAT_R16G16B16A16_FLOAT);
-     
+      
     // PostEffects
     AppBase::SetPipelineState(Graphics::postEffectsPSO);
 
@@ -501,17 +468,19 @@ void ExampleApp::Render() {
                                     m_postEffectsConstsGPU.GetAddressOf());
     m_screenSquare->Render(m_context);
 
+    // 구름 이펙트
+    AppBase::SetPipelineState(Graphics::volumeSmokePSO);
+    AppBase::SetGlobalConsts(m_globalConstsGPU);
+    if (m_Cloud->m_cloud) {
+        m_Cloud->Render(m_context);
+        m_context->PSSetConstantBuffers(3, 1, m_volumeConstsGpu.GetAddressOf());
+    }
+
     // 단순 이미지 처리와 블룸
     AppBase::SetPipelineState(Graphics::postProcessingPSO);
     m_postProcess.Render(m_context);
 
-    AppBase::SetPipelineState(Graphics::volumeSmokePSO);
-    AppBase::SetGlobalConsts(m_globalConstsGPU);
-    if (m_Cloud->m_cloud)
-    {
-        m_Cloud->Render(m_context);
-        m_context->PSSetConstantBuffers(3, 1, m_volumeConstsGpu.GetAddressOf());
-    }
+   
 
 }
 
@@ -549,8 +518,6 @@ void ExampleApp::UpdateGUI() {
         flag += ImGui::RadioButton("Depth", &m_postEffectsConstsCPU.mode, 2);
         flag += ImGui::SliderFloat(
             "DepthScale", &m_postEffectsConstsCPU.depthScale, 0.0, 0.1);
-        flag += ImGui::SliderFloat("Fog", &m_postEffectsConstsCPU.fogStrength,
-                                   0.0, 10.0);
 
         if (flag)
             D3D11Utils::UpdateBuffer(m_context, m_postEffectsConstsCPU,
@@ -561,7 +528,7 @@ void ExampleApp::UpdateGUI() {
         ImGui::TreePop();
     }
 
-    if (ImGui::TreeNode("Post Processing")) {
+    if (ImGui::TreeNode("Post Processing")) {             
         int flag = 0;
         flag += ImGui::SliderFloat(
             "Bloom Strength",
@@ -581,10 +548,7 @@ void ExampleApp::UpdateGUI() {
     }
 
     ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-    if (ImGui::TreeNode("Light1")) {
-        // ImGui::SliderFloat3("Position",
-        // &m_globalConstsCPU.lights[0].position.x,
-        //                     -5.0f, 5.0f);
+    if (ImGui::TreeNode("Light")) {
         ImGui::SliderFloat("Radius", &m_globalConstsCPU.lights[0].radius, 0.0f,
                            1.0f);
         ImGui::SliderFloat("PositionX", &m_globalConstsCPU.lights[0].position.x,
@@ -615,37 +579,15 @@ void ExampleApp::UpdateGUI() {
     }
 
 
-    ImGui::SetNextItemOpen(false, ImGuiCond_Once);
-    if (ImGui::TreeNode("Test1")) {
-
-        ImGui::SliderFloat("Scale", &m_testObj1->scale, 0.1f, 300.0f);
-        ImGui::SliderFloat("PositionX", &m_testObj1->position.x, -400.0f,
-                           400.0f);
-        ImGui::SliderFloat("PositionY", &m_testObj1->position.y, -50.0f, 20.0f);
-        ImGui::SliderFloat("PositionZ", &m_testObj1->position.z, -200.0f,
-                           200.0f);
-              
-        ImGui::SliderFloat("RotationY", &m_testObj1->rotation.y, 0.0f, 3.0f);
-        ImGui::TreePop();
-    }
     ImGui::SetNextItemOpen(true, ImGuiCond_Once);
     if (ImGui::TreeNode("Grass")) {  
-         
+        ImGui::Checkbox("GrassVisible", &m_grassVisible);
         ImGui::SliderFloat("Wind", &m_windStrength, -3.0f, 3.0f);
-        ImGui::SliderFloat("Scale", &m_grass6->scale, 0.1f, 30.0f);
-        ImGui::SliderFloat("PositionX", &m_grass6->position.x, -10.0f,
-                           10.0f);
-        ImGui::SliderFloat("PositionY", &m_grass6->position.y, -3.0f, 3.0f);
-        ImGui::SliderFloat("PositionZ", &m_grass6->position.z, -10.0f,
-                           10.0f);
-
-        ImGui::SliderFloat("RotationY", &m_grass6->rotation.y, -2.0f, 3.0f);
         ImGui::TreePop();
     }
 
     ImGui::SetNextItemOpen(false, ImGuiCond_Once);
     if (ImGui::TreeNode("Material")) {
-        ImGui::SliderFloat("LodBias", &m_globalConstsCPU.lodBias, 0.0f, 10.0f);
 
         int flag = 0;
 
@@ -670,9 +612,6 @@ void ExampleApp::UpdateGUI() {
             "AlbedoTexture", &m_ground->m_materialConsts.GetCpu().useAlbedoMap,
             1);
         flag += ImGui::CheckboxFlags(
-            "EmissiveTexture",
-            &m_ground->m_materialConsts.GetCpu().useEmissiveMap, 1);
-        flag += ImGui::CheckboxFlags(
             "Use NormalMapping",
             &m_ground->m_materialConsts.GetCpu().useNormalMap, 1);
         flag += ImGui::CheckboxFlags(
@@ -684,9 +623,6 @@ void ExampleApp::UpdateGUI() {
                                    &m_ground->m_meshConsts.GetCpu().heightScale,
                                    0.0f, 0.5f);
         flag += ImGui::CheckboxFlags(
-            "Use MetallicMap",
-            &m_ground->m_materialConsts.GetCpu().useMetallicMap, 1);
-        flag += ImGui::CheckboxFlags(
             "Use RoughnessMap",
             &m_ground->m_materialConsts.GetCpu().useRoughnessMap, 1);
 
@@ -694,7 +630,7 @@ void ExampleApp::UpdateGUI() {
         //     m_mainObj->UpdateConstantBuffers(m_device, m_context);
         // }
 
-        // ImGui::Checkbox("Draw Normals", &m_ground->m_drawNormals);
+        ImGui::Checkbox("Draw Normals", &m_ground->m_drawNormals);
 
         ImGui::TreePop();
     }

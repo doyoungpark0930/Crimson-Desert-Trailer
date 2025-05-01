@@ -76,6 +76,9 @@
     <FxCompile Include="DepthOnlyGrassPS.hlsl">
       <Filter>Shader</Filter>
     </FxCompile>
+    <FxCompile Include="CloudPS.hlsl">
+      <Filter>Shader</Filter>
+    </FxCompile>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="D3D11Utils.cpp" />

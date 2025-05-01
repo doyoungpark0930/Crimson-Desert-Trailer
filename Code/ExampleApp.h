@@ -51,6 +51,8 @@ class ExampleApp : public AppBase {
 
     float m_windStrength = 1.0f; //잔디 바람세기
 
+    bool m_grassVisible= true;
+
     // 거울
     //shared_ptr<Model> m_mirror;
     //DirectX::SimpleMath::Plane m_mirrorPlane;
@@ -60,7 +62,6 @@ class ExampleApp : public AppBase {
     vector<shared_ptr<Model>> m_basicList;
     vector<shared_ptr<Model>> m_tessellatedQuadList;
     vector<shared_ptr<Model>> m_tessellatedTriangleList;
-    shared_ptr<Model> m_basicGrass;
     vector<shared_ptr<Model>> m_grassList;
 
 };

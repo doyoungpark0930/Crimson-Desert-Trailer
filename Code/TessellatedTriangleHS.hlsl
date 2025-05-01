@@ -42,18 +42,18 @@ PatchConstOutput MyPatchConstantFunc(InputPatch<VertexOut, 3> patch,
     
     float dist = length(center - eyeWorld);
     float distMin = 0.5;
-    float distMax = 20.0;
-    float tess = 2.0 * saturate((distMax - dist) / (distMax - distMin)) + 1.0;
+    float distMax = 10.0;
+    float tess = 1.0 * saturate((distMax - dist) / (distMax - distMin)) + 1.0;
     
     PatchConstOutput pt;
     
-    if (dist > 80.0)
+    if (dist > 10.0)
     {
         pt.edges[0] = 1.0;
         pt.edges[1] = 1.0;
         pt.edges[2] = 1.0;
     }
-    else if (dist > 10.0)
+    else if (dist > 6.0)
     {
         pt.edges[0] = 1.0;
         pt.edges[1] = 1.0;
