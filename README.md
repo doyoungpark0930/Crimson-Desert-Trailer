@@ -43,30 +43,6 @@
 
 ---
 
-## 📚 참고 자료 및 출처
-
-### 1. 👨‍🏫 강의 및 기본 코드
-- [홍정모 연구소 그래픽스 강의](https://www.honglab.ai/collections)
-
-### 2. 📘 LearnOpenGL 참고
-- [PBR 이론](https://learnopengl.com/PBR/Theory)  
-- [감마 커렉션](https://learnopengl.com/Advanced-Lighting/Gamma-Correction)  
-- [Peter Panning 문제 해결](https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping)
-
-### 3. 🌩️ ShaderToy 예제 코드
-- [Perlin Noise](https://www.shadertoy.com/view/3dVXDc)  
-- [Volumetric Clouds](https://www.shadertoy.com/view/4ttSWf)
-- [Cook-Torrance + Oren-Nayar - PBR 시도](https://www.shadertoy.com/view/MsSczh)
-
-
-### 4. 🧬 기타 참고
-- [Wave + Fractal Brownian Motion 이론](https://thebookofshaders.com/13/?lan=kr)  
-- [C++ Perlin Noise 오픈소스](https://github.com/Reputeless/PerlinNoise)  
-- [PBR 오픈소스 코드](https://github.com/Nadrin/PBR)  
-- [MSAA 후처리 & HDR 처리](https://github.com/Microsoft/DirectXTK/wiki/Using-HDR-rendering)
-
----
-
 ### 📌 향후 구름 렌더링 개선 참고 자료
 
 - ShaderToy 구름 렌더링 코드 제공자의 렌더링 해설 영상  
@@ -91,4 +67,30 @@
 - **디퍼드 쉐이딩 (Deferred Shading)의 원리 이해 후 적용**
 
 - **DirectX 12 기반으로 포팅**
+
+---
+
+## 📚 참고 자료 및 출처
+
+### 1. 👨‍🏫 강의 및 기본 코드
+- [홍정모 연구소 그래픽스 강의](https://www.honglab.ai/collections)
+
+### 2. 📘 LearnOpenGL 참고
+- [PBR 이론](https://learnopengl.com/PBR/Theory)  
+- [감마 커렉션](https://learnopengl.com/Advanced-Lighting/Gamma-Correction)  
+- [Peter Panning 문제 해결](https://learnopengl.com/Advanced-Lighting/Shadows/Shadow-Mapping)
+
+### 3. 🌩️ ShaderToy 예제 코드
+- [Perlin Noise](https://www.shadertoy.com/view/3dVXDc)  
+- [Volumetric Clouds](https://www.shadertoy.com/view/4ttSWf)
+- [Cook-Torrance + Oren-Nayar - PBR 시도](https://www.shadertoy.com/view/MsSczh)
+
+
+### 4. 🧬 기타 참고
+- [Wave + Fractal Brownian Motion 이론](https://thebookofshaders.com/13/?lan=kr)  
+- [C++ Perlin Noise 오픈소스](https://github.com/Reputeless/PerlinNoise)  
+- [PBR 오픈소스 코드](https://github.com/Nadrin/PBR)  
+- [MSAA 후처리 & HDR 처리](https://github.com/Microsoft/DirectXTK/wiki/Using-HDR-rendering)
+
+---
 
