@@ -1,9 +1,3 @@
-I'm imitating Crimson-Desert-Trailer in Pearl Abyss using DirectX11.
-
-It's only consist of Computer Graphics skill like Lod, Tesslation, Mesh, Fulid simulation, Pcf,Pcss, Computer Shader, Shadow Mapping, Graphics Pipeline.
-
-It's very interesting but sometimes quite hard. this result can be extended to Directx12, because the code structure is based on Directx 12 tutorial by Microsoft.
-
 펄어비스 붉은 사막 트레일러의 한 장면을 모작 했습니다.
 <img width="953" alt="화면 캡처 2025-05-05 101747" src="https://github.com/user-attachments/assets/662b69d9-9f4e-419c-8732-aa3b77327447" />
 
