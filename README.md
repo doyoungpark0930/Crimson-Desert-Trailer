@@ -46,7 +46,8 @@
 ### 3. 🌩️ ShaderToy 예제 코드
 - [Perlin Noise](https://www.shadertoy.com/view/3dVXDc)  
 - [Volumetric Clouds](https://www.shadertoy.com/view/4ttSWf)
-- [Cook-Torrance + Oren-Nayar - PBR 시도] (https://www.shadertoy.com/view/MsSczh)
+- [Cook-Torrance + Oren-Nayar - PBR 시도](https://www.shadertoy.com/view/MsSczh)
+
 
 ### 4. 🧬 기타 참고
 - [Wave + Fractal Brownian Motion 이론](https://thebookofshaders.com/13/?lan=kr)  
