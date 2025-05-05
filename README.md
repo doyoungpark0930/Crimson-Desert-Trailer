@@ -1,4 +1,4 @@
-펄어비스 붉은 사막 트레일러의 한 장면을 모작 했습니다.
+펄어비스 붉은 사막 트레일러의 한 장면을 DirectX11로 모작한 포트폴리오 입니다
 <img width="953" alt="화면 캡처 2025-05-05 101747" src="https://github.com/user-attachments/assets/662b69d9-9f4e-419c-8732-aa3b77327447" />
 
 
@@ -16,8 +16,6 @@ Noise 기반 잔디 배치 및 흔들림 조절,
 MSAA(멀티 샘플링)적용
 
 그래픽스 디버거 : Render Doc사용
-
-DirectX 11 사용
 
 
 
