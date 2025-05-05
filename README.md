@@ -12,7 +12,7 @@
 ## 🧪 프로젝트 개요
 
 **펄어비스 붉은 사막 트레일러**의 한 장면을 모작한 DirectX 11 기반 그래픽스 포트폴리오입니다.  
-실시간 렌더링 기술, 셰이더 개발, 볼륨 렌더링, 테셀레이션 등 다양한 최신 그래픽스 기술을 구현하였습니다.
+실시간 렌더링 기술, 셰이더 개발, 볼륨 렌더링, 테셀레이션 등 다양한 기본 그래픽스 기술을 구현하였습니다.
 
 ---
 
@@ -46,6 +46,7 @@
 ### 3. 🌩️ ShaderToy 예제 코드
 - [Perlin Noise](https://www.shadertoy.com/view/3dVXDc)  
 - [Volumetric Clouds](https://www.shadertoy.com/view/4ttSWf)
+- [Cook-Torrance + Oren-Nayar - PBR 시도] (https://www.shadertoy.com/view/MsSczh)
 
 ### 4. 🧬 기타 참고
 - [Wave + Fractal Brownian Motion 이론](https://thebookofshaders.com/13/?lan=kr)  
