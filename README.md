@@ -57,4 +57,28 @@
 
 ---
 
+### 📌 향후 구름 렌더링 개선 참고 자료
+
+- ShaderToy 구름 렌더링 코드 제공자의 렌더링 해설 영상  
+  👉 [YouTube - ShaderToy Volumetric Cloud Explanation](https://www.youtube.com/watch?v=BFld4EBO2RE)
+
+- 구름의 그림자 및 지형 형성에 사용된 노이즈 이론  
+  👉 [FBM(Fractional Brownian Motion) 설명](https://iquilezles.org/articles/fbm/)  
+  👉 [Improved Noise 및 Terrain Shaping](https://iquilezles.org/articles/morenoise/)
+
+- 구름을 좀 더 이해하기 위해 ShaderToy 및 Unreal Engine 소스를 참고하여  
+  다양한 형태의 구름 예제 코드를 경험할 필요가 있음
+
+---
+
+## 🔭 향후 학습 및 발전 방향
+
+- **3D Fluid Simulation 복습 및 응용 (연기 시뮬레이션)**  
+  → 유한차분법, 편미분 방정식 해석, Implicit Integration 방식 등을 Compute Shader 기반으로 복습 및 응용
+
+- **Curl Noise의 실제 활용 방식 분석 및 구현**
+
+- **디퍼드 쉐이딩 (Deferred Shading)의 원리 이해 후 적용**
+
+- **DirectX 12 기반으로 포팅**
 
