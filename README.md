@@ -16,7 +16,7 @@
 
 ## 🖥️ 테스트 환경 및 성능 참고
 
-- CPU: Intel(R) Core(TM) i5-8265U (4C/8T, 1.6~3.9GHz)  
+- CPU: Intel(R) Core(TM) i5-8265U (1.6GHz)  
 - GPU: Intel UHD Graphics 620 (내장 그래픽)  
 - RAM: 8GB
 
